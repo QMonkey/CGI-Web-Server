@@ -1,4 +1,4 @@
 CGI-Web-Server
 ==============
 
-An CGI web server implemented by C
+A CGI web server implemented by C
