@@ -1,7 +1,7 @@
 #ifndef CGI_PARAM_SLIST_H
 #define CGI_PARAM_SLIST_H
 
-typedef struct param_slist pslist_t;
+#include "cgi.h"
 
 #ifdef __cplusplus
 extern "C"

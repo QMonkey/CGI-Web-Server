@@ -5,13 +5,6 @@
 #include "utils/cgi_slist.h"
 #include "utils/cgi_param_slist.h"
 
-struct param_slist
-{
-	char *key;
-	char *value;
-	SLIST_ENTRY(pslist_t) linker;
-};
-
 pslist_t* pslist_create(char *key,char *value)
 {
 	pslist_t *param = factory_create(PARAM_SLIST);
@@ -51,7 +44,7 @@ void pslist_destroy(pslist_t **head_ptr)
 	if(CGI_SLIST_IS_EMPTY(*head_ptr))
 	{
 		pslist_t *head = *head_ptr;
-		pslist_destroy(CGI_SLIST_NEXT(head,linker));
+		pslist_destroy(&CGI_SLIST_NEXT(head,linker));
 		pslist_delete(head);
 	}
 }

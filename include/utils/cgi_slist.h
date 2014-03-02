@@ -3,7 +3,7 @@
 
 #define CGI_SLIST_ENTRY(type)	struct						\
 				{						\
-					type *next;			\
+					type *next;				\
 				}
 
 #define CGI_SLIST_FIRST(head)		(head)

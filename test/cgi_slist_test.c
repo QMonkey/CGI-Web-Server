@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "cgi_slist.h"
+#include "utils/cgi_slist.h"
 
 typedef struct single_list slist_t;
 

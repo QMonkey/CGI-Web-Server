@@ -2,7 +2,6 @@
 
 #include "cgi.h"
 #include "factory/cgi_factory.h"
-#include "utils/cgi_param_slist.h"
 
 void* factory_create(CGI_OBJECT item)
 {
