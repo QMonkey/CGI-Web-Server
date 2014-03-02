@@ -16,6 +16,11 @@ pslist_t* pslist_create(char *key,char *value)
 	return param;
 }
 
+int pslist_is_empty(pslist_t *head)
+{
+	return CGI_SLIST_IS_EMPTY(head);
+}
+
 void pslist_insert_head(pslist_t **head_ptr,pslist_t *elem)
 {
 	if(*head_ptr != elem)
@@ -41,7 +46,7 @@ void pslist_delete(pslist_t *elem)
 
 void pslist_destroy(pslist_t **head_ptr)
 {
-	if(CGI_SLIST_IS_EMPTY(*head_ptr))
+	if(!CGI_SLIST_IS_EMPTY(*head_ptr))
 	{
 		pslist_t *head = *head_ptr;
 		pslist_destroy(&CGI_SLIST_NEXT(head,linker));
