@@ -8,8 +8,8 @@ extern "C"
 {
 #endif
 
-extern void* factory_create(CGI_OBJECT item);
-extern void factory_destroy(void *object,CGI_OBJECT item);
+extern void* cgi_factory_create(CGI_OBJECT item);
+extern void cgi_factory_destroy(void *object,CGI_OBJECT item);
 
 #ifdef __cplusplus
 }

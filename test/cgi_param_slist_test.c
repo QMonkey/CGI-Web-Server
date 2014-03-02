@@ -14,35 +14,35 @@ static void print(pslist_t *head)
 
 int main()
 {
-	pslist_t *head = pslist_create("Hello","Hi");
+	pslist_t *head = cgi_pslist_create("Hello","Hi");
 	print(head);
 	printf("\n");
 
-	pslist_insert_head(&head,pslist_create("A","B"));
+	cgi_pslist_insert_head(&head,cgi_pslist_create("A","B"));
 	print(head);
 	printf("\n");
 
-	pslist_insert_head(&head,pslist_create("C","D"));
+	cgi_pslist_insert_head(&head,cgi_pslist_create("C","D"));
 	print(head);
 	printf("\n");
 
-	pslist_insert_head(&head,pslist_create("E","F"));
+	cgi_pslist_insert_head(&head,cgi_pslist_create("E","F"));
 	print(head);
 	printf("\n");
 
-	pslist_insert_head(&head,pslist_create("G","H"));
+	cgi_pslist_insert_head(&head,cgi_pslist_create("G","H"));
 	print(head);
 	printf("\n");
 
-	printf("find:\t%s\t\t%s\n\n","C",pslist_find(head,"C"));
+	printf("find:\t%s\t\t%s\n\n","C",cgi_pslist_find(head,"C"));
 
-	while(!pslist_is_empty(head))
+	while(!cgi_pslist_is_empty(head))
 	{
-		pslist_remove_head(&head);
+		cgi_pslist_remove_head(&head);
 		print(head);
 		putchar('\n');
 	}
 
-	pslist_destroy(&head);
+	cgi_pslist_destroy(&head);
 	return 0;
 }

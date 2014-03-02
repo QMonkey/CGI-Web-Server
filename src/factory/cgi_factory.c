@@ -3,7 +3,7 @@
 #include "cgi.h"
 #include "factory/cgi_factory.h"
 
-void* factory_create(CGI_OBJECT item)
+void* cgi_factory_create(CGI_OBJECT item)
 {
 	void *object = NULL;
 
@@ -19,7 +19,7 @@ void* factory_create(CGI_OBJECT item)
 	return object;
 }
 
-void factory_destroy(void *object,CGI_OBJECT item)
+void cgi_factory_destroy(void *object,CGI_OBJECT item)
 {
 	free(object);
 }
