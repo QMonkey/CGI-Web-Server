@@ -1,13 +1,9 @@
 #ifndef CGI_H
 #define CGI_H
 
-#ifndef __cplusplus
-extern "C"
+enum CGI_OBJECT
 {
-#endif
-
-#ifndef __cplusplus
-}
-#endif
+	PARAM_SLIST
+};
 
 #endif
