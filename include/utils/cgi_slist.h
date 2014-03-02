@@ -7,9 +7,11 @@
 				}
 
 #define CGI_SLIST_FIRST(head)		(head)
-#define CGI_SLIST_NEXT(elem,field)	(elem0>field.next)
+#define CGI_SLIST_NEXT(elem,field)	((elem)->field.next)
 #define CGI_SLIST_END(head)		NULL
 #define CGI_SLIST_IS_EMPTY(head)	(CGI_SLIST_FIRST(head) == CGI_SLIST_END(head))
+
+#define CGI_SLIST_INIT(head,field)	((head)->field.next = NULL)
 
 #define CGI_SLIST_INSERT_HEAD(head,elem,field)					\
 	do									\
@@ -52,5 +54,9 @@
 		}								\
 	}									\
 	while(0)
+
+#define CGI_SLIST_FOREACH(var,head,field)					\
+	for((var) = (head); (var) != CGI_SLIST_END(head); 			\
+		(var) = CGI_SLIST_NEXT(var,field))
 
 #endif
