@@ -3,7 +3,7 @@
 
 #define CGI_SLIST_ENTRY(type)	struct						\
 				{						\
-					struct type *next;			\
+					type *next;			\
 				}
 
 #define CGI_SLIST_FIRST(head)		(head)
@@ -29,7 +29,7 @@
 	}									\
 	while(0)
 
-#define CGI_SLIST_REOMVE_HEAD(head,field)					\
+#define CGI_SLIST_REMOVE_HEAD(head,field)					\
 	do									\
 	{									\
 		(head) = (head)->field.next;					\
@@ -39,13 +39,13 @@
 #define CGI_SLIST_REMOVE(type,head,elem,field)					\
 	do									\
 	{									\
-		if(head == elem)						\
+		if((head) == (elem))						\
 		{								\
 			CGI_SLIST_REMOVE_HEAD(head,field);			\
 		}								\
 		else								\
 		{								\
-			struct type *ptr = (head);				\
+			type *ptr = (head);				\
 			while(ptr->field.next != (elem))			\
 			{							\
 				ptr = ptr->field.next;				\
