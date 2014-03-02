@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include "cgi.h"
 #include "factory/cgi_factory.h"
@@ -37,6 +38,19 @@ void pslist_remove_head(pslist_t **head_ptr)
 		CGI_SLIST_REMOVE_HEAD(*head_ptr,linker);
 		pslist_delete(head);
 	}
+}
+
+char* pslist_find(pslist_t *head,char *key)
+{
+	pslist_t *tmp = NULL;
+	CGI_SLIST_FOREACH(tmp,head,linker)
+	{
+		if(strcmp(tmp->key,key) == 0)
+		{
+			break;
+		}
+	}
+	return tmp != NULL ? tmp->value : NULL;
 }
 
 void pslist_delete(pslist_t *elem)

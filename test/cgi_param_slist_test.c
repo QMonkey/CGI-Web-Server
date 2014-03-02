@@ -34,6 +34,8 @@ int main()
 	print(head);
 	printf("\n");
 
+	printf("find:\t%s\t\t%s\n\n","C",pslist_find(head,"C"));
+
 	while(!pslist_is_empty(head))
 	{
 		pslist_remove_head(&head);

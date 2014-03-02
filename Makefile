@@ -32,4 +32,4 @@ $(OBJPATH)/cgi_param_slist_test.o: test/cgi_param_slist_test.c
 	$(CC) -g -c $< -I include -o $@
 
 clean:
-	-rm -rf $(PROG) $(OBJS) $(TESTOBJS)
+	-rm -rf $(EXEC) $(OBJS) $(TESTOBJS)
