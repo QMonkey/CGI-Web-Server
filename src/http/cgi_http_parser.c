@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -37,7 +38,7 @@ LINE_STATUS cgi_http_parse_line(cgi_http_connection_t *connection)
 	char *rbuffer = connection->rbuffer;
 	LINE_STATUS lstatus;
 
-	for( ; checked_idx < read_idx; ++checked_idx)
+	for( ; checked_idx < connection->read_idx; ++checked_idx)
 	{
 		if(rbuffer[checked_idx] == '\r')
 		{
@@ -47,7 +48,7 @@ LINE_STATUS cgi_http_parse_line(cgi_http_connection_t *connection)
 				rbuffer[checked_idx++] = '\0';
 				lstatus = LINE_OK;
 			}
-			else if(checked_idx + 1 == read_idx)
+			else if(checked_idx + 1 == connection->read_idx)
 			{
 				lstatus = LINE_OPEN;
 			}
@@ -64,7 +65,7 @@ LINE_STATUS cgi_http_parse_line(cgi_http_connection_t *connection)
 		}
 	}
 
-	connection->checked_idx = chekced_idx;
+	connection->checked_idx = checked_idx;
 	return lstatus;
 }
 
@@ -74,33 +75,191 @@ HTTP_STATUS cgi_http_parse_request_line(cgi_http_connection_t *connection)
 	uint32_t checked_idx = connection->checked_idx;
 	char *line_end = rbuffer + checked_idx;
 	connection->start_line_idx = checked_idx;
-	char *path = strpbrk(rbuffer," \t");
+	char *url = strpbrk(rbuffer," \t");
 
-	if(path == NULL || path >= line_end)
+	if(url == NULL || url >= line_end)
 	{
 		return BAD_REQUEST;
 	}
-	*path++ = '\0';
+	*url++ = '\0';
+
+	if(cgi_http_parse_method(connection) == BAD_REQUEST)
+	{
+		return BAD_REQUEST;
+	}
+
+	url += strspn(url," \t");
+	if(*url != '/' || url >= line_end)
+	{
+		return BAD_REQUEST;
+	}
+
+	char *version = strpbrk(url," \t");
+	if(version == NULL || version >= line_end)
+	{
+		return BAD_REQUEST;
+	}
+	*version++ = '\0';
+	version += strspn(version," \t");
+	connection->version = version;
+	connection->cstatus = CHECK_HEADER;
+	return cgi_http_parse_version(connection);
 }
 
 HTTP_STATUS cgi_http_parse_method(cgi_http_connection_t *connection)
 {
+	char *rbuffer = connection->rbuffer;
+	if(!strncasecmp(rbuffer,"GET",3) == 0)
+	{
+		connection->method = GET;
+		return CHECKING;
+	}
+	if(!strncasecmp(rbuffer,"POST",4) == 0)
+	{
+		connection->method = POST;
+		return CHECKING;
+	}
+	if(!strncasecmp(rbuffer,"HEAD",4) == 0)
+	{
+		connection->method = HEAD;
+		return CHECKING;
+	}
+	if(!strncasecmp(rbuffer,"PUT",3) == 0)
+	{
+		connection->method = PUT;
+		return CHECKING;
+	}
+	if(!strncasecmp(rbuffer,"DELETE",6) == 0)
+	{
+		connection->method = DELETE;
+		return CHECKING;
+	}
+	if(!strncasecmp(rbuffer,"TRACE",5) == 0)
+	{
+		connection->method = TRACE;
+		return CHECKING;
+	}
+	if(!strncasecmp(rbuffer,"OPTIONS",7) == 0)
+	{
+		connection->method = OPTIONS;
+		return CHECKING;
+	}
+	if(!strncasecmp(rbuffer,"CONNECT",7) == 0)
+	{
+		connection->method = CONNECT;
+		return CHECKING;
+	}
+	if(!strncasecmp(rbuffer,"PATCH",5) == 0)
+	{
+		connection->method = PATCH;
+		return CHECKING;
+	}
+	return BAD_REQUEST;
 }
 
 HTTP_STATUS cgi_http_parse_version(cgi_http_connection_t *connection)
 {
+	HTTP_STATUS hstatus;
+	if(strcmp(connection->version,"HTTP/1.1") == 0)
+	{
+		hstatus = CHECKING;
+	}
+	else if(strcmp(connection->version,"HTTP/1.0") == 0)
+	{
+		hstatus = HTTP_VERSION_NOT_SUPPORTED;
+	}
+	else
+	{
+		hstatus = BAD_REQUEST;
+	}
+	return hstatus;
 }
 
 HTTP_STATUS cgi_http_parse_header(cgi_http_connection_t *connection)
 {
+	char *current = connection->rbuffer + connection->start_line_idx;
+	connection->start_line_idx = connection->checked_idx;
+
+	if(*current == '\0')
+	{
+		connection->cstatus = CHECK_CONTENT;
+	}
+	else if(strncasecmp(current,"Connection:",11) == 0)
+	{
+		current += 11;
+		current += strspn(current," \t");
+		if(strncasecmp(current,"keep-live",9) == 0)
+		{
+			connection->linger = 1;
+		}
+	}
+	else if(strncasecmp(current,"Content-Length:",15) == 0)
+	{
+		current += strspn(current," \t");
+		connection->content_length = atol(current);
+	}
+	else
+	{
+		printf("%s\n",current);
+	}
+	return CHECKING;
 }
 
 HTTP_STATUS cgi_http_parse_content(cgi_http_connection_t *connection)
 {
+	connection->content = connection->rbuffer + connection->start_line_idx;
+	if(connection->read_idx >= connection->content_length + connection->start_line_idx)
+	{
+		connection->content[connection->content_length] = '\0';
+		return OK;
+	}
+	return CHECKING;
 }
 
 HTTP_STATUS cgi_http_process_read(cgi_http_connection_t *connection)
 {
+	LINE_STATUS lstatus;
+	HTTP_STATUS hstatus = CHECKING;
+	while(hstatus == CHECKING)
+	{
+		if(connection->cstatus != CHECK_CONTENT)
+		{
+			lstatus = cgi_http_parse_line(connection);
+		}
+		if(lstatus == LINE_BAD)
+		{
+			hstatus = BAD_REQUEST;
+			break;
+		}
+		else if(lstatus == LINE_OPEN)
+		{
+			break;
+		}
+
+		switch(connection->cstatus)
+		{
+		case CHECK_REQUEST_LINE:
+			hstatus = cgi_http_parse_request_line(connection);
+			break;
+
+		case CHECK_HEADER:
+			hstatus = cgi_http_parse_header(connection);
+			break;
+
+		case CHECK_CONTENT:
+			if(connection->content_length == 0)
+			{
+				hstatus = OK;
+				break;
+			}
+			hstatus = cgi_http_parse_content(connection);
+			break;
+
+		default:
+			break;
+		}
+	}
+	return hstatus;
 }
 
 HTTP_STATUS cgi_http_process_write(cgi_http_connection_t *connection)
@@ -109,8 +268,84 @@ HTTP_STATUS cgi_http_process_write(cgi_http_connection_t *connection)
 
 void cgi_http_write_request_line(cgi_http_connection_t *connection,HTTP_STATUS hstatus)
 {
+	char *status = NULL;
+	switch(hstatus)
+	{
+	case OK:
+		status = "200 OK";
+		break;
+
+	case FOUND:
+		status = "302 Found";
+		break;
+
+	case NOT_MODIFIED:
+		status = "304 Modified";
+		break;
+
+	case BAD_REQUEST:
+		status = "400 Bad Request";
+		break;
+
+	case FORBIDDEN:
+		status = "403 Forbidden";
+		break;
+
+	case NOT_FOUND:
+		status = "404 Not Found";
+		break;
+
+	case INTERNAL_SERVER_ERROR:
+		status = "500 Internal Server Error";
+		break;
+
+	case HTTP_VERSION_NOT_SUPPORTED:
+		status = "505 HTTP Version Not Supported";
+		break;
+
+	default:
+		break;
+	}
+	connection->write_idx += snprintf(connection->wbuffer,connection->wsize,
+		"%s %s\r\n",connection->version,status);
 }
 
 void cgi_http_parse_param(cgi_http_connection_t *connection)
 {
+	char *src = NULL;
+	if(connection->method == GET)
+	{
+		src = strpbrk(connection->url,"?");
+		if(src != NULL)
+		{
+			*src++ = '\0';
+		}
+	}
+	else
+	{
+		src = connection->content;
+	}
+	if(src != NULL)
+	{
+		char *key = NULL;
+		char *value = NULL;
+		while(1)
+		{
+			key = src;
+			src = strpbrk(src,"=");
+			*src++ = '\0';
+
+			value = src;
+			cgi_pslist_insert_head(&connection->head,
+				cgi_pslist_create(key,value));
+			if((src = strpbrk(src,"&")) != NULL)
+			{
+				*src++ = '\0';
+			}
+			else
+			{
+				break;
+			}
+		}
+	}
 }
