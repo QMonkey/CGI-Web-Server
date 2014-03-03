@@ -1,10 +1,23 @@
 #ifndef CGI_HTTP_PARSER_H
 #define CGI_HTTP_PARSER_H
 
+#include "cgi.h"
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+extern void cgi_http_connection_init(cgi_http_connection_t *connection);
+extern LINE_STATUS cgi_http_parse_line(cgi_http_connection_t *connection);
+extern HTTP_STATUS cgi_http_parse_request_line(cgi_http_connection_t *connection);
+extern HTTP_STATUS cgi_http_parse_header(cgi_http_connection_t *connection);
+extern HTTP_STATUS cgi_http_parse_content(cgi_http_connection_t *connection);
+extern HTTP_STATUS cgi_http_process_read(cgi_http_connection_t *connection);
+extern HTTP_STATUS cgi_http_process_write(cgi_http_connection_t *connection);
+extern void cgi_http_write_request_line(cgi_http_connection_t *connection,
+	HTTP_STATUS hstatus);
+extern void cgi_http_parse_param(cgi_http_connection_t *connection);
 
 #ifdef __cplusplus
 }

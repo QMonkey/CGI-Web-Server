@@ -3,9 +3,9 @@
 #include "utils/cgi_slist.h"
 #include "utils/cgi_param_slist.h"
 
-static void print(pslist_t *head)
+static void print(cgi_pslist_t *head)
 {
-	pslist_t *tmp = NULL;
+	cgi_pslist_t *tmp = NULL;
 	CGI_SLIST_FOREACH(tmp,head,linker)
 	{
 		printf("key:\t%s\t\tvalue:\t%s\n",tmp->key,tmp->value);
@@ -14,7 +14,7 @@ static void print(pslist_t *head)
 
 int main()
 {
-	pslist_t *head = cgi_pslist_create("Hello","Hi");
+	cgi_pslist_t *head = cgi_pslist_create("Hello","Hi");
 	print(head);
 	printf("\n");
 

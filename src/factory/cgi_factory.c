@@ -10,7 +10,7 @@ void* cgi_factory_create(CGI_OBJECT item)
 	switch(item)
 	{
 	case PARAM_SLIST:
-		object = (pslist_t*)malloc(sizeof(pslist_t));
+		object = (cgi_pslist_t*)malloc(sizeof(cgi_pslist_t));
 		break;
 	default:
 		break;
