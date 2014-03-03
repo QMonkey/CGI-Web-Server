@@ -73,11 +73,10 @@ HTTP_STATUS cgi_http_parse_request_line(cgi_http_connection_t *connection)
 {
 	char *rbuffer = connection->rbuffer;
 	uint32_t checked_idx = connection->checked_idx;
-	char *line_end = rbuffer + checked_idx;
 	connection->start_line_idx = checked_idx;
-	char *url = strpbrk(rbuffer," \t");
 
-	if(url == NULL || url >= line_end)
+	char *url = strpbrk(rbuffer," \t");
+	if(url == NULL)
 	{
 		return BAD_REQUEST;
 	}
@@ -89,13 +88,13 @@ HTTP_STATUS cgi_http_parse_request_line(cgi_http_connection_t *connection)
 	}
 
 	url += strspn(url," \t");
-	if(*url != '/' || url >= line_end)
+	if(*url != '/')
 	{
 		return BAD_REQUEST;
 	}
 
 	char *version = strpbrk(url," \t");
-	if(version == NULL || version >= line_end)
+	if(version == NULL)
 	{
 		return BAD_REQUEST;
 	}
