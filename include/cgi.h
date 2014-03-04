@@ -4,9 +4,11 @@
 #include <stdint.h>
 
 #include "utils/cgi_slist.h"
+#include "utils/cgi_dltrie.h"
 
 #define CGI_HTTP_CONNECTION_READ_BUFFER_SIZE 1024
 #define CGI_HTTP_CONNECTION_WRITE_BUFFER_SIZE 1024
+#define CGI_URL_DLTRIE_KEY_SIZE 32
 
 typedef enum CGI_OBJECT CGI_OBJECT;
 typedef enum LINE_STATUS LINE_STATUS;
@@ -16,11 +18,13 @@ typedef enum HTTP_METHOD HTTP_METHOD;
 
 typedef struct cgi_http_connection cgi_http_connection_t;
 typedef struct cgi_param_slist cgi_pslist_t;
+typedef struct cgi_url_dltrie cgi_url_dltrie_t;
 
 enum CGI_OBJECT
 {
+	HTTP_CONNECTION,
 	PARAM_SLIST,
-	HTTP_CONNECTION
+	URL_DLTRIE
 };
 
 enum LINE_STATUS
@@ -63,13 +67,6 @@ enum HTTP_METHOD
 	PATCH
 };
 
-struct cgi_param_slist
-{
-	char *key;
-	char *value;
-	CGI_SLIST_ENTRY(cgi_pslist_t) linker;
-};
-
 struct cgi_http_connection
 {
 	char *rbuffer;
@@ -89,6 +86,21 @@ struct cgi_http_connection
 	int linger;
 	HTTP_METHOD method;
 	CHECK_STATUS cstatus;
+};
+
+struct cgi_param_slist
+{
+	char *key;
+	char *value;
+	CGI_SLIST_ENTRY(cgi_pslist_t) linker;
+};
+
+struct cgi_url_dltrie
+{
+	char *key;
+	void (*handler)(cgi_http_connection_t*);
+	uint32_t ksize;
+	CGI_DLTRIE_ENTRY(cgi_url_dltrie) linker;
 };
 
 #endif

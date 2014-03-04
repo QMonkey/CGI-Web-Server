@@ -7,13 +7,10 @@ void* cgi_factory_create(CGI_OBJECT item)
 {
 	void *object = NULL;
 	cgi_http_connection_t *connection = NULL;
+	cgi_url_dltrie_t *url_trie = NULL;
 
 	switch(item)
 	{
-	case PARAM_SLIST:
-		object = (cgi_pslist_t*)malloc(sizeof(cgi_pslist_t));
-		break;
-
 	case HTTP_CONNECTION:
 		connection = (cgi_http_connection_t*)malloc(sizeof(cgi_http_connection_t));
 		connection->rbuffer = (char*)malloc(sizeof(char) * 
@@ -25,6 +22,17 @@ void* cgi_factory_create(CGI_OBJECT item)
 		object = connection;
 		break;
 
+	case PARAM_SLIST:
+		object = (cgi_pslist_t*)malloc(sizeof(cgi_pslist_t));
+		break;
+
+	case URL_DLTRIE:
+		url_trie = (cgi_url_dltrie_t*)malloc(sizeof(cgi_url_dltrie_t));
+		url_trie->key = (char*)malloc(sizeof(char) * CGI_URL_DLTRIE_KEY_SIZE);
+		url_trie->ksize = 0;
+		object = url_trie;
+		break;
+
 	default:
 		break;
 	}
@@ -34,11 +42,23 @@ void* cgi_factory_create(CGI_OBJECT item)
 
 void cgi_factory_destroy(void *object,CGI_OBJECT item)
 {
-	if(item == HTTP_CONNECTION)
+	cgi_http_connection_t *connection = NULL;
+	cgi_url_dltrie_t *url_trie = NULL;
+	switch(item)
 	{
-		cgi_http_connection_t *connection = (cgi_http_connection_t*)object;
+	case HTTP_CONNECTION:
+		connection = (cgi_http_connection_t*)object;
 		free(connection->rbuffer);
 		free(connection->wbuffer);
+		break;
+
+	case URL_DLTRIE:
+		url_trie = (cgi_url_dltrie_t*)object;
+		free(url_trie->key);
+		break;
+
+	defualt:
+		break;
 	}
 	free(object);
 }

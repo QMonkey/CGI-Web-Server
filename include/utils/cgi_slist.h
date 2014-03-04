@@ -9,9 +9,10 @@
 #define CGI_SLIST_FIRST(head)		(head)
 #define CGI_SLIST_NEXT(elem,field)	((elem)->field.next)
 #define CGI_SLIST_END(head)		NULL
+
 #define CGI_SLIST_IS_EMPTY(head)	(CGI_SLIST_FIRST(head) == CGI_SLIST_END(head))
 
-#define CGI_SLIST_INIT(head,field)	((head)->field.next = NULL)
+#define CGI_SLIST_INIT(elem,field)	((elem)->field.next = NULL)
 
 #define CGI_SLIST_INSERT_HEAD(head,elem,field)					\
 	do									\
@@ -45,7 +46,7 @@
 		}								\
 		else								\
 		{								\
-			type *ptr = (head);				\
+			type *ptr = (head);					\
 			while(ptr->field.next != (elem))			\
 			{							\
 				ptr = ptr->field.next;				\
