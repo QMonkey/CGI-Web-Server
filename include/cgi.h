@@ -5,6 +5,9 @@
 
 #include "utils/cgi_slist.h"
 
+#define CGI_HTTP_CONNECTION_READ_BUFFER_SIZE 1024
+#define CGI_HTTP_CONNECTION_WRITE_BUFFER_SIZE 1024
+
 typedef enum CGI_OBJECT CGI_OBJECT;
 typedef enum LINE_STATUS LINE_STATUS;
 typedef enum CHECK_STATUS CHECK_STATUS;
@@ -16,7 +19,8 @@ typedef struct cgi_param_slist cgi_pslist_t;
 
 enum CGI_OBJECT
 {
-	PARAM_SLIST
+	PARAM_SLIST,
+	HTTP_CONNECTION
 };
 
 enum LINE_STATUS

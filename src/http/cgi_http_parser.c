@@ -3,10 +3,19 @@
 #include <string.h>
 
 #include "cgi.h"
+#include "factory/cgi_factory.h"
 #include "http/cgi_http_parser.h"
 
 static HTTP_STATUS cgi_http_parse_method(cgi_http_connection_t *connection);
 static HTTP_STATUS cgi_http_parse_version(cgi_http_connection_t *connection);
+
+cgi_http_connection_t* cgi_http_connection_create()
+{
+	cgi_http_connection_t *connection = (cgi_http_connection_t*)
+		cgi_factory_create(HTTP_CONNECTION);
+	cgi_http_connection_init(connection);
+	return connection;
+}
 
 void cgi_http_connection_init(cgi_http_connection_t *connection)
 {
@@ -92,6 +101,7 @@ HTTP_STATUS cgi_http_parse_request_line(cgi_http_connection_t *connection)
 	{
 		return BAD_REQUEST;
 	}
+	connection->url = url;
 
 	char *version = strpbrk(url," \t");
 	if(version == NULL)
@@ -108,47 +118,47 @@ HTTP_STATUS cgi_http_parse_request_line(cgi_http_connection_t *connection)
 HTTP_STATUS cgi_http_parse_method(cgi_http_connection_t *connection)
 {
 	char *rbuffer = connection->rbuffer;
-	if(!strncasecmp(rbuffer,"GET",3) == 0)
+	if(strncasecmp(rbuffer,"GET",3) == 0)
 	{
 		connection->method = GET;
 		return CHECKING;
 	}
-	if(!strncasecmp(rbuffer,"POST",4) == 0)
+	if(strncasecmp(rbuffer,"POST",4) == 0)
 	{
 		connection->method = POST;
 		return CHECKING;
 	}
-	if(!strncasecmp(rbuffer,"HEAD",4) == 0)
+	if(strncasecmp(rbuffer,"HEAD",4) == 0)
 	{
 		connection->method = HEAD;
 		return CHECKING;
 	}
-	if(!strncasecmp(rbuffer,"PUT",3) == 0)
+	if(strncasecmp(rbuffer,"PUT",3) == 0)
 	{
 		connection->method = PUT;
 		return CHECKING;
 	}
-	if(!strncasecmp(rbuffer,"DELETE",6) == 0)
+	if(strncasecmp(rbuffer,"DELETE",6) == 0)
 	{
 		connection->method = DELETE;
 		return CHECKING;
 	}
-	if(!strncasecmp(rbuffer,"TRACE",5) == 0)
+	if(strncasecmp(rbuffer,"TRACE",5) == 0)
 	{
 		connection->method = TRACE;
 		return CHECKING;
 	}
-	if(!strncasecmp(rbuffer,"OPTIONS",7) == 0)
+	if(strncasecmp(rbuffer,"OPTIONS",7) == 0)
 	{
 		connection->method = OPTIONS;
 		return CHECKING;
 	}
-	if(!strncasecmp(rbuffer,"CONNECT",7) == 0)
+	if(strncasecmp(rbuffer,"CONNECT",7) == 0)
 	{
 		connection->method = CONNECT;
 		return CHECKING;
 	}
-	if(!strncasecmp(rbuffer,"PATCH",5) == 0)
+	if(strncasecmp(rbuffer,"PATCH",5) == 0)
 	{
 		connection->method = PATCH;
 		return CHECKING;
@@ -194,8 +204,15 @@ HTTP_STATUS cgi_http_parse_header(cgi_http_connection_t *connection)
 	}
 	else if(strncasecmp(current,"Content-Length:",15) == 0)
 	{
+		current += 15;
 		current += strspn(current," \t");
 		connection->content_length = atol(current);
+	}
+	else if(strncasecmp(current,"Cookie:",7) ==0)
+	{
+		current += 7;
+		current += strspn(current," \t");
+		connection->cookie = current;
 	}
 	else
 	{
@@ -347,4 +364,9 @@ void cgi_http_parse_param(cgi_http_connection_t *connection)
 			}
 		}
 	}
+}
+
+void cgi_http_connection_destroy(cgi_http_connection_t *connection)
+{
+	cgi_factory_destroy(connection,HTTP_CONNECTION);
 }
