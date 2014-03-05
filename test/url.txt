@@ -1,0 +1,8 @@
+/public/static/void/main/String/args/
+/public/google/chrome/index.html
+/pub/firefox/haha.jpg
+/categories/shu-ju-ku
+/linux/kernel/
+/github/linux/kernel/linus/
+/public/static/int/print/hello
+/public/void/good/night/

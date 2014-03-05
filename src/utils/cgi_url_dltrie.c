@@ -34,6 +34,11 @@ char* cgi_url_strpbrk(char *url)
 void cgi_url_dltrie_insert(cgi_url_dltrie_t **head_ptr,char *url,
 	cgi_handler_t handler)
 {
+	if(head_ptr == NULL || url == NULL || *url == '\0')
+	{
+		return;
+	}
+
 	char *scanner = NULL;
 	cgi_url_dltrie_t *head = NULL;
 	uint32_t diff;
@@ -42,18 +47,18 @@ void cgi_url_dltrie_insert(cgi_url_dltrie_t **head_ptr,char *url,
 		scanner = cgi_url_strpbrk(url);
 		head = *head_ptr;
 		diff = scanner - url;
-		if(memcmp(head->key,url,diff))
-		{
-			head_ptr = &CGI_DLTRIE_SIBLING(head,linker);
-			continue;
-		}
 		if(head == NULL)
 		{
 			*head_ptr = cgi_url_dltrie_create();
 			head = *head_ptr;
-			snprintf(head->key,diff,"%s",url);
+			snprintf(head->key,diff + 1,"%s",url);
 		}
-		if(scanner == NULL)
+		else if(memcmp(head->key,url,diff))
+		{
+			head_ptr = &CGI_DLTRIE_SIBLING(head,linker);
+			continue;
+		}
+		if(*scanner == '\0')
 		{
 			head->handler = handler;
 			break;
@@ -81,7 +86,7 @@ cgi_handler_t cgi_url_dltrie_find(cgi_url_dltrie_t *head,char *url)
 			head = CGI_DLTRIE_SIBLING(head,linker);
 			continue;
 		}
-		if(scanner == NULL)
+		if(*scanner == '\0')
 		{
 			handler = head->handler;
 			break;
