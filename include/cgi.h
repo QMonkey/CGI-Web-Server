@@ -20,6 +20,8 @@ typedef struct cgi_http_connection cgi_http_connection_t;
 typedef struct cgi_param_slist cgi_pslist_t;
 typedef struct cgi_url_dltrie cgi_url_dltrie_t;
 
+typedef void (*cgi_handler_t)(cgi_http_connection_t*);
+
 enum CGI_OBJECT
 {
 	HTTP_CONNECTION,
@@ -98,9 +100,9 @@ struct cgi_param_slist
 struct cgi_url_dltrie
 {
 	char *key;
-	void (*handler)(cgi_http_connection_t*);
+	cgi_handler_t handler;
 	uint32_t ksize;
-	CGI_DLTRIE_ENTRY(cgi_url_dltrie) linker;
+	CGI_DLTRIE_ENTRY(cgi_url_dltrie_t) linker;
 };
 
 #endif
