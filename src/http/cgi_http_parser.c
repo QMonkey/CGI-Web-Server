@@ -1,3 +1,6 @@
+#include <sys/types.h>
+#include <sys/socket.h>
+
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -17,7 +20,8 @@ cgi_http_connection_t* cgi_http_connection_create()
 	return connection;
 }
 
-void cgi_http_connection_init(cgi_http_connection_t *connection)
+void cgi_http_connection_init(cgi_http_connection_t *connection,int sockaddr,
+	struct sockaddr *clientaddr,socklen_t clientlen)
 {
 	if(connection->rsize == 0)
 	{
@@ -39,6 +43,9 @@ void cgi_http_connection_init(cgi_http_connection_t *connection)
 	connection->content_length = 0;
 	connection->linger = 0;
 	connection->cstatus = CHECK_REQUEST_LINE;
+	connection->sockfd = sockfd;
+	connection->clientlen = clientlen;
+	memcpy(&connection->clientaddr,clientaddr,clientlen);
 }
 
 LINE_STATUS cgi_http_parse_line(cgi_http_connection_t *connection)

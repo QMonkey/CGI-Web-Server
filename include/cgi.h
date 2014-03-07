@@ -1,6 +1,10 @@
 #ifndef CGI_H
 #define CGI_H
 
+#include <sys/epoll.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+
 #include <stdint.h>
 
 #include "utils/cgi_slist.h"
@@ -9,6 +13,8 @@
 #define CGI_HTTP_CONNECTION_READ_BUFFER_SIZE 1024
 #define CGI_HTTP_CONNECTION_WRITE_BUFFER_SIZE 1024
 #define CGI_URL_DLTRIE_KEY_SIZE 32
+#define CGI_CONNECTION_SIZE 1024
+#define CGI_EVENT_SIZE	1024
 
 typedef enum CGI_OBJECT CGI_OBJECT;
 typedef enum LINE_STATUS LINE_STATUS;
@@ -19,6 +25,7 @@ typedef enum HTTP_METHOD HTTP_METHOD;
 typedef struct cgi_http_connection cgi_http_connection_t;
 typedef struct cgi_param_slist cgi_pslist_t;
 typedef struct cgi_url_dltrie cgi_url_dltrie_t;
+typedef struct cgi_event_dispatcher cgi_event_dispatcher_t;
 
 typedef void (*cgi_handler_t)(cgi_http_connection_t*);
 
@@ -26,7 +33,8 @@ enum CGI_OBJECT
 {
 	HTTP_CONNECTION,
 	PARAM_SLIST,
-	URL_DLTRIE
+	URL_DLTRIE,
+	EVENT_DISPATCHER
 };
 
 enum LINE_STATUS
@@ -88,6 +96,9 @@ struct cgi_http_connection
 	int linger;
 	HTTP_METHOD method;
 	CHECK_STATUS cstatus;
+	int sockfd;
+	sockaddr clientaddr;
+	socklen_t clientlen;
 };
 
 struct cgi_param_slist
@@ -103,6 +114,17 @@ struct cgi_url_dltrie
 	cgi_handler_t handler;
 	uint32_t ksize;
 	CGI_DLTRIE_ENTRY(cgi_url_dltrie_t) linker;
+};
+
+struct cgi_event_dispatcher
+{
+	cgi_http_connection_t *connections;
+	struct epoll_event *events;
+	uint32_t csize;
+	uint32_t evsize;
+	int epfd;
+	int listenfd;
+	int timeout;
 };
 
 #endif

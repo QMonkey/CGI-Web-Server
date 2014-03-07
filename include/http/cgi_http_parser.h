@@ -1,6 +1,9 @@
 #ifndef CGI_HTTP_PARSER_H
 #define CGI_HTTP_PARSER_H
 
+#include <sys/types.h>
+#include <sys/socket.h>
+
 #include "cgi.h"
 
 #ifdef __cplusplus
@@ -9,7 +12,8 @@ extern "C"
 #endif
 
 extern cgi_http_connection_t* cgi_http_connection_create();
-extern void cgi_http_connection_init(cgi_http_connection_t *connection);
+extern void cgi_http_connection_init(cgi_http_connection_t *connection,
+	int sockfd,struct *sockaddr clientaddr,socklen_t clientlen);
 extern LINE_STATUS cgi_http_parse_line(cgi_http_connection_t *connection);
 extern HTTP_STATUS cgi_http_parse_request_line(cgi_http_connection_t *connection);
 extern HTTP_STATUS cgi_http_parse_header(cgi_http_connection_t *connection);
