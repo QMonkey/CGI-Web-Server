@@ -97,7 +97,7 @@ struct cgi_http_connection
 	HTTP_METHOD method;
 	CHECK_STATUS cstatus;
 	int sockfd;
-	sockaddr clientaddr;
+	struct sockaddr clientaddr;
 	socklen_t clientlen;
 };
 

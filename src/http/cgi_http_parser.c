@@ -20,8 +20,7 @@ cgi_http_connection_t* cgi_http_connection_create()
 	return connection;
 }
 
-void cgi_http_connection_init(cgi_http_connection_t *connection,int sockaddr,
-	struct sockaddr *clientaddr,socklen_t clientlen)
+void cgi_http_connection_init(cgi_http_connection_t *connection)
 {
 	if(connection->rsize == 0)
 	{
@@ -43,6 +42,12 @@ void cgi_http_connection_init(cgi_http_connection_t *connection,int sockaddr,
 	connection->content_length = 0;
 	connection->linger = 0;
 	connection->cstatus = CHECK_REQUEST_LINE;
+}
+
+void cgi_http_connection_init4(cgi_http_connection_t *connection,int sockfd,
+	struct sockaddr *clientaddr,socklen_t clientlen)
+{
+	cgi_http_connection_init(connection);
 	connection->sockfd = sockfd;
 	connection->clientlen = clientlen;
 	memcpy(&connection->clientaddr,clientaddr,clientlen);

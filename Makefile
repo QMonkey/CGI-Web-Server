@@ -4,7 +4,7 @@ CC = gcc
 
 EXEC = $(EXECPATH)/cgi_slist_test $(EXECPATH)/cgi_param_slist_test $(EXECPATH)/cgi_http_parser_test $(EXECPATH)/cgi_url_dltrie_test
 
-OBJS = $(OBJPATH)/cgi_factory.o $(OBJPATH)/cgi_http_parser.o $(OBJPATH)/cgi_object_pool.o $(OBJPATH)/cgi_param_slist.o $(OBJPATH)/cgi_url_dltrie.o
+OBJS = $(OBJPATH)/cgi_factory.o $(OBJPATH)/cgi_http_parser.o $(OBJPATH)/cgi_object_pool.o $(OBJPATH)/cgi_param_slist.o $(OBJPATH)/cgi_url_dltrie.o $(OBJPATH)/cgi_event_dispatcher.o
 
 TESTOBJS = $(OBJPATH)/cgi_slist_test.o $(OBJPATH)/cgi_param_slist_test.o $(OBJPATH)/cgi_http_parser_test.o $(OBJPATH)/cgi_url_dltrie_test.o
 
@@ -35,6 +35,9 @@ $(OBJPATH)/cgi_param_slist.o: src/utils/cgi_param_slist.c
 	$(CC) -g -c $< -I include -o $@
 
 $(OBJPATH)/cgi_factory.o: src/factory/cgi_factory.c
+	$(CC) -g -c $< -I include -o $@
+
+$(OBJPATH)/cgi_event_dispatcher.o: src/dispatcher/cgi_event_dispatcher.c
 	$(CC) -g -c $< -I include -o $@
 
 $(OBJPATH)/cgi_slist_test.o: test/cgi_slist_test.c

@@ -1,35 +1,35 @@
+#include <unistd.h>
+#include <fcntl.h>
 #include <sys/epoll.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#include <stdio.h>
+
 #include "cgi.h"
 #include "factory/cgi_factory.h"
+#include "http/cgi_http_parser.h"
 #include "dispatcher/cgi_event_dispatcher.h"
 
-cgi_event_dispatcher_t* cgi_event_dispatcher_create(int epfd,int listenfd,int timeout)
+cgi_event_dispatcher_t* cgi_event_dispatcher_create()
 {
 	cgi_event_dispatcher_t *dispatcher = cgi_factory_create(EVENT_DISPATCHER);
-	dispatcher->epfd = epfd;
-	dispatcher->listenfd = listenfd;
-	dispatcher->timeout = timeout;
+	dispatcher->timeout = -1;
 	return dispatcher;
 }
 
-void cgi_event_dispatcher_set_epfd(cgi_event_dispatcher_t *dispatcher,int epfd)
+void cgi_event_dispatcher_init(cgi_event_dispatcher_t *dispatcher,int epfd,int listenfd,int timeout)
 {
 	dispatcher->epfd = epfd;
-}
-
-void cgi_event_dispatcher_set_listenfd(cgi_event_dispatcher_t *dispatcher,int listenfd)
-{
 	dispatcher->listenfd = listenfd;
+	dispatcher->timeout = timeout;
 }
 
 void cgi_event_dispatcher_addfd(cgi_event_dispatcher_t *dispatcher,int fd,int in,int oneshot)
 {
-	epoll_event event;
+	struct epoll_event event;
 	event.data.fd = fd;
-	event.events = EPOLLET | EPOLLRDHUP | EPOLLONESHOT;
+	event.events = EPOLLET | EPOLLRDHUP;
 	if(in)
 	{
 		event.events |= EPOLLIN;
@@ -38,6 +38,10 @@ void cgi_event_dispatcher_addfd(cgi_event_dispatcher_t *dispatcher,int fd,int in
 	{
 		event.events |= EPOLLOUT;
 	}
+	if(oneshot)
+	{
+		event.events |= EPOLLONESHOT;
+	}
 	epoll_ctl(dispatcher->epfd,EPOLL_CTL_ADD,fd,&event);
 	cgi_event_dispatcher_set_nonblocking(fd);
 }
@@ -45,12 +49,11 @@ void cgi_event_dispatcher_addfd(cgi_event_dispatcher_t *dispatcher,int fd,int in
 void cgi_event_dispatcher_rmfd(cgi_event_dispatcher_t *dispatcher,int fd)
 {
 	epoll_ctl(dispatcher->epfd,EPOLL_CTL_DEL,fd,NULL);
-	close(fd);
 }
 
 void cgi_event_dispatcher_modfd(cgi_event_dispatcher_t *dispatcher,int fd,int ev)
 {
-	epoll_event event;
+	struct epoll_event event;
 	event.data.fd = fd;
 	event.events = ev | EPOLLET | EPOLLRDHUP | EPOLLONESHOT;
 	epoll_ctl(dispatcher->epfd,EPOLL_CTL_MOD,fd,&event);
@@ -65,7 +68,7 @@ void cgi_event_dispatcher_set_nonblocking(int fd)
 
 void cgi_event_dispatcher_loop(cgi_event_dispatcher_t *dispatcher)
 {
-	int stop = false;
+	int stop = 0;
 	int nfds;
 	int i;
 	int tmpfd;
@@ -86,17 +89,17 @@ void cgi_event_dispatcher_loop(cgi_event_dispatcher_t *dispatcher)
 			{
 				cfd = accept(tmpfd,&clientaddr,&clientlen);
 				cgi_event_dispatcher_addfd(dispatcher,cfd,1,1);
-				client_connection = dispatcher->connections[cfd];
-				cgi_http_connection_init(cfd,client_connection,&clientaddr,clientlen);
+				client_connection = dispatcher->connections + cfd;
+				cgi_http_connection_init4(client_connection,cfd,&clientaddr,clientlen);
 			}
-			else if(event & (EPOLLRDHUP | EPOLLHUP | EPOLLERR))
+			else if(event.events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR))
 			{
 				cgi_event_dispatcher_rmfd(dispatcher,tmpfd);
 			}
-			else if(event & EPOLLIN)
+			else if(event.events & EPOLLIN)
 			{
 			}
-			else if(event & EPOLLOUT)
+			else if(event.events & EPOLLOUT)
 			{
 			}
 			else

@@ -1,3 +1,5 @@
+#include <sys/epoll.h>
+
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -36,8 +38,8 @@ void* cgi_factory_create(CGI_OBJECT item)
 		break;
 
 	case EVENT_DISPATCHER:
-		dispatcher = (cig_event_dispatcher_t*)malloc(sizeof(cgi_event_dispatcher_t));
-		dispatcher->events = (struct epoll_event)malloc(sizeof(struct epoll_event) * CGI_EVENT_SIZE);
+		dispatcher = (cgi_event_dispatcher_t*)malloc(sizeof(cgi_event_dispatcher_t));
+		dispatcher->events = (struct epoll_event*)malloc(sizeof(struct epoll_event) * CGI_EVENT_SIZE);
 		dispatcher->evsize = CGI_EVENT_SIZE;
 		break;
 
