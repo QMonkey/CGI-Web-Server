@@ -42,13 +42,19 @@ void cgi_event_dispatcher_addfd(cgi_event_dispatcher_t *dispatcher,int fd,int in
 	{
 		event.events |= EPOLLONESHOT;
 	}
-	epoll_ctl(dispatcher->epfd,EPOLL_CTL_ADD,fd,&event);
+	if(epoll_ctl(dispatcher->epfd,EPOLL_CTL_ADD,fd,&event) == -1)
+	{
+		perror("epoll_ctl");
+	}
 	cgi_event_dispatcher_set_nonblocking(fd);
 }
 
 void cgi_event_dispatcher_rmfd(cgi_event_dispatcher_t *dispatcher,int fd)
 {
-	epoll_ctl(dispatcher->epfd,EPOLL_CTL_DEL,fd,NULL);
+	if(epoll_ctl(dispatcher->epfd,EPOLL_CTL_DEL,fd,NULL) == -1)
+	{
+		perror("epoll_ctl");
+	}
 }
 
 void cgi_event_dispatcher_modfd(cgi_event_dispatcher_t *dispatcher,int fd,int ev)
@@ -63,7 +69,10 @@ void cgi_event_dispatcher_set_nonblocking(int fd)
 {
 	int fsflags = fcntl(fd,F_GETFL);
 	fsflags |= O_NONBLOCK;
-	fcntl(fd,F_SETFL,fsflags);
+	if(fcntl(fd,F_SETFL,fsflags) == -1)
+	{
+		perror("fcntl");
+	}
 }
 
 void cgi_event_dispatcher_loop(cgi_event_dispatcher_t *dispatcher)
@@ -95,15 +104,29 @@ void cgi_event_dispatcher_loop(cgi_event_dispatcher_t *dispatcher)
 			else if(event.events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR))
 			{
 				cgi_event_dispatcher_rmfd(dispatcher,tmpfd);
+				printf("Epoll error.\n");
 			}
 			else if(event.events & EPOLLIN)
 			{
+				cgi_http_connection_t *connection = dispatcher->connections + tmpfd;
+				int rd = 0;
+				while((rd = read(tmpfd,connection->rbuffer + connection->read_idx,
+					connection->rsize - connection->read_idx)) > 0)
+				{
+					connection->read_idx += rd;
+				}
+				write(STDOUT_FILENO,connection->rbuffer,connection->read_idx);
+				cgi_event_dispatcher_modfd(dispatcher,tmpfd,EPOLLOUT);
 			}
 			else if(event.events & EPOLLOUT)
 			{
+				cgi_http_connection_t *connection = dispatcher->connections + tmpfd;
+				write(tmpfd,connection->rbuffer,connection->read_idx);
+				close(tmpfd);
 			}
 			else
 			{
+				printf("Other error\n");
 			}
 		}
 	}

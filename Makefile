@@ -2,13 +2,16 @@ EXECPATH = bin
 OBJPATH = obj
 CC = gcc
 
-EXEC = $(EXECPATH)/cgi_slist_test $(EXECPATH)/cgi_param_slist_test $(EXECPATH)/cgi_http_parser_test $(EXECPATH)/cgi_url_dltrie_test
+
+EXEC = $(EXECPATH)/cgi_slist_test $(EXECPATH)/cgi_param_slist_test $(EXECPATH)/cgi_http_parser_test $(EXECPATH)/cgi_url_dltrie_test $(EXECPATH)/cgi_event_dispatcher_test
 
 OBJS = $(OBJPATH)/cgi_factory.o $(OBJPATH)/cgi_http_parser.o $(OBJPATH)/cgi_object_pool.o $(OBJPATH)/cgi_param_slist.o $(OBJPATH)/cgi_url_dltrie.o $(OBJPATH)/cgi_event_dispatcher.o
 
-TESTOBJS = $(OBJPATH)/cgi_slist_test.o $(OBJPATH)/cgi_param_slist_test.o $(OBJPATH)/cgi_http_parser_test.o $(OBJPATH)/cgi_url_dltrie_test.o
+TESTOBJS = $(OBJPATH)/cgi_slist_test.o $(OBJPATH)/cgi_param_slist_test.o $(OBJPATH)/cgi_http_parser_test.o $(OBJPATH)/cgi_url_dltrie_test.o $(OBJPATH)/cgi_event_dispatcher_test.o
+
 
 all: $(OBJS) $(TESTOBJS) $(EXEC)
+
 
 $(EXECPATH)/cgi_slist_test: $(OBJPATH)/cgi_slist_test.o
 	$(CC) -g $< -o $@
@@ -21,6 +24,10 @@ $(EXECPATH)/cgi_http_parser_test: $(OBJPATH)/cgi_http_parser_test.o
 
 $(EXECPATH)/cgi_url_dltrie_test: $(OBJPATH)/cgi_url_dltrie_test.o
 	$(CC) -g $< -o $@ $(OBJPATH)/cgi_url_dltrie.o $(OBJPATH)/cgi_factory.o
+
+$(EXECPATH)/cgi_event_dispatcher_test: $(OBJPATH)/cgi_event_dispatcher_test.o
+	$(CC) -g $< -o $@ $(OBJPATH)/cgi_factory.o $(OBJPATH)/cgi_event_dispatcher.o $(OBJPATH)/cgi_http_parser.o $(OBJPATH)/cgi_param_slist.o
+
 
 $(OBJPATH)/cgi_http_parser.o: src/http/cgi_http_parser.c
 	$(CC) -g -c $< -I include -o $@
@@ -51,6 +58,10 @@ $(OBJPATH)/cgi_http_parser_test.o: test/cgi_http_parser_test.c
 
 $(OBJPATH)/cgi_url_dltrie_test.o: test/cgi_url_dltrie_test.c
 	$(CC) -g -c $< -I include -o $@
+
+$(OBJPATH)/cgi_event_dispatcher_test.o: test/cgi_event_dispatcher_test.c
+	$(CC) -g -c $< -I include -o $@
+
 
 clean:
 	-rm -rf $(EXEC) $(OBJS) $(TESTOBJS)
