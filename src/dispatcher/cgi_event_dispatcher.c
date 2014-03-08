@@ -86,6 +86,7 @@ void cgi_event_dispatcher_loop(cgi_event_dispatcher_t *dispatcher)
 	struct sockaddr clientaddr;
 	socklen_t clientlen;
 	cgi_http_connection_t *client_connection = NULL;
+
 	while(!stop)
 	{
 		nfds = epoll_wait(dispatcher->epfd,dispatcher->events,
@@ -98,35 +99,36 @@ void cgi_event_dispatcher_loop(cgi_event_dispatcher_t *dispatcher)
 			{
 				cfd = accept(tmpfd,&clientaddr,&clientlen);
 				cgi_event_dispatcher_addfd(dispatcher,cfd,1,1);
-				client_connection = dispatcher->connections + cfd;
-				cgi_http_connection_init4(client_connection,cfd,&clientaddr,clientlen);
+				cgi_http_connection_init4(dispatcher->connections + cfd,
+					cfd,&clientaddr,clientlen);
 			}
 			else if(event.events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR))
 			{
 				cgi_event_dispatcher_rmfd(dispatcher,tmpfd);
-				printf("Epoll error.\n");
 			}
 			else if(event.events & EPOLLIN)
 			{
-				cgi_http_connection_t *connection = dispatcher->connections + tmpfd;
+				cgi_http_connection_t *client_connection = dispatcher->connections + tmpfd;
 				int rd = 0;
-				while((rd = read(tmpfd,connection->rbuffer + connection->read_idx,
-					connection->rsize - connection->read_idx)) > 0)
+				while((rd = read(tmpfd,client_connection->rbuffer + client_connection->read_idx,
+					client_connection->rsize - client_connection->read_idx)) > 0)
 				{
-					connection->read_idx += rd;
+					client_connection->read_idx += rd;
 				}
-				write(STDOUT_FILENO,connection->rbuffer,connection->read_idx);
+				write(STDOUT_FILENO,client_connection->rbuffer,client_connection->read_idx);
 				cgi_event_dispatcher_modfd(dispatcher,tmpfd,EPOLLOUT);
 			}
 			else if(event.events & EPOLLOUT)
 			{
-				cgi_http_connection_t *connection = dispatcher->connections + tmpfd;
-				write(tmpfd,connection->rbuffer,connection->read_idx);
-				close(tmpfd);
+				cgi_http_connection_t *client_connection = dispatcher->connections + tmpfd;
+				write(tmpfd,client_connection->rbuffer,client_connection->read_idx);
+				if(!client_connection->linger)
+				{
+					close(tmpfd);
+				}
 			}
 			else
 			{
-				printf("Other error\n");
 			}
 		}
 	}
