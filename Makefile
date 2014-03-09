@@ -20,7 +20,7 @@ $(EXECPATH)/cgi_param_slist_test: $(OBJPATH)/cgi_param_slist_test.o $(OBJPATH)/c
 	$(CC) -g $< -o $@ $(OBJPATH)/cgi_param_slist.o $(OBJPATH)/cgi_factory.o
 
 $(EXECPATH)/cgi_http_parser_test: $(OBJPATH)/cgi_http_parser_test.o
-	$(CC) -g $< -o $@ $(OBJPATH)/cgi_factory.o $(OBJPATH)/cgi_http_parser.o $(OBJPATH)/cgi_param_slist.o
+	$(CC) -g $< -o $@ $(OBJPATH)/cgi_factory.o $(OBJPATH)/cgi_http_parser.o $(OBJPATH)/cgi_param_slist.o $(OBJPATH)/cgi_event_dispatcher.o
 
 $(EXECPATH)/cgi_url_dltrie_test: $(OBJPATH)/cgi_url_dltrie_test.o
 	$(CC) -g $< -o $@ $(OBJPATH)/cgi_url_dltrie.o $(OBJPATH)/cgi_factory.o

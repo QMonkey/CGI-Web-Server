@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -8,6 +9,7 @@
 #include "cgi.h"
 #include "factory/cgi_factory.h"
 #include "http/cgi_http_parser.h"
+#include "dispatcher/cgi_event_dispatcher.h"
 
 static HTTP_STATUS cgi_http_parse_method(cgi_http_connection_t *connection);
 static HTTP_STATUS cgi_http_parse_version(cgi_http_connection_t *connection);
@@ -51,6 +53,29 @@ void cgi_http_connection_init4(cgi_http_connection_t *connection,int sockfd,
 	connection->sockfd = sockfd;
 	connection->clientlen = clientlen;
 	memcpy(&connection->clientaddr,clientaddr,clientlen);
+}
+
+void cgi_http_connection_read(cgi_http_connection_t *connection)
+{ int rd = 0;
+	while((rd = read(connection->sockfd,connection->rbuffer,connection->rsize - connection->read_idx)) > 0)
+	{
+		connection->read_idx += rd;
+	}
+}
+
+void cgi_http_connection_write(cgi_http_connection_t *connection,
+	cgi_event_dispatcher_t *dispatcher)
+{
+	write(connection->sockfd,connection->rbuffer,connection->read_idx);
+	if(connection->linger)
+	{
+		cgi_http_connection_init(connection);
+		cgi_event_dispatcher_modfd(dispatcher,connection->sockfd,EPOLLIN);
+	}
+	else
+	{
+		close(connection->sockfd);
+	}
 }
 
 LINE_STATUS cgi_http_parse_line(cgi_http_connection_t *connection)

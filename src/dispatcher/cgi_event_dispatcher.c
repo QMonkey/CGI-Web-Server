@@ -1,4 +1,3 @@
-#include <unistd.h>
 #include <fcntl.h>
 #include <sys/epoll.h>
 #include <sys/types.h>
@@ -85,7 +84,6 @@ void cgi_event_dispatcher_loop(cgi_event_dispatcher_t *dispatcher)
 	struct epoll_event event;
 	struct sockaddr clientaddr;
 	socklen_t clientlen;
-	cgi_http_connection_t *client_connection = NULL;
 
 	while(!stop)
 	{
@@ -108,24 +106,12 @@ void cgi_event_dispatcher_loop(cgi_event_dispatcher_t *dispatcher)
 			}
 			else if(event.events & EPOLLIN)
 			{
-				cgi_http_connection_t *client_connection = dispatcher->connections + tmpfd;
-				int rd = 0;
-				while((rd = read(tmpfd,client_connection->rbuffer + client_connection->read_idx,
-					client_connection->rsize - client_connection->read_idx)) > 0)
-				{
-					client_connection->read_idx += rd;
-				}
-				write(STDOUT_FILENO,client_connection->rbuffer,client_connection->read_idx);
+				cgi_http_connection_read(dispatcher->connections + tmpfd);
 				cgi_event_dispatcher_modfd(dispatcher,tmpfd,EPOLLOUT);
 			}
 			else if(event.events & EPOLLOUT)
 			{
-				cgi_http_connection_t *client_connection = dispatcher->connections + tmpfd;
-				write(tmpfd,client_connection->rbuffer,client_connection->read_idx);
-				if(!client_connection->linger)
-				{
-					close(tmpfd);
-				}
+				cgi_http_connection_write(dispatcher->connections + tmpfd,dispatcher);
 			}
 			else
 			{

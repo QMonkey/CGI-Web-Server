@@ -15,6 +15,9 @@ extern cgi_http_connection_t* cgi_http_connection_create();
 extern void cgi_http_connection_init(cgi_http_connection_t *connection);
 extern void cgi_http_connection_init4(cgi_http_connection_t *connection,
 	int sockfd,struct sockaddr *clientaddr,socklen_t clientlen);
+extern void cgi_http_connection_read(cgi_http_connection_t *connection);
+extern void cgi_http_connection_write(cgi_http_connection_t *connection,
+	cgi_event_dispatcher_t *dispatcher);
 extern LINE_STATUS cgi_http_parse_line(cgi_http_connection_t *connection);
 extern HTTP_STATUS cgi_http_parse_request_line(cgi_http_connection_t *connection);
 extern HTTP_STATUS cgi_http_parse_header(cgi_http_connection_t *connection);
