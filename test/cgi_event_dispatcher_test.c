@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <signal.h>
 
 #include "cgi.h"
 #include "dispatcher/cgi_event_dispatcher.h"
@@ -39,7 +40,13 @@ int main()
 	assert(retcode != -1);
 
 	cgi_event_dispatcher_init(dispatcher,epfd,listenfd,-1);
+	cgi_event_dispatcher_addpipe(dispatcher);
 	cgi_event_dispatcher_addfd(dispatcher,listenfd,1,0);
+
+	cgi_event_dispatcher_addsig(SIGHUP);
+	cgi_event_dispatcher_addsig(SIGCHLD);
+	cgi_event_dispatcher_addsig(SIGTERM);
+	cgi_event_dispatcher_addsig(SIGINT);
 
 	cgi_event_dispatcher_loop(dispatcher);
 

@@ -104,7 +104,6 @@ void cgi_factory_destroy(void *object,CGI_OBJECT item)
 		dispatcher = (cgi_event_dispatcher_t*)object;
 		free(dispatcher->events);
 		cgi_factory_destroy_vector(dispatcher->connections,HTTP_CONNECTION);
-		free(dispatcher);
 		break;
 
 	defualt:

@@ -2,13 +2,24 @@
 #include <sys/epoll.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <pthread.h>
 
+#include <assert.h>
+#include <errno.h>
 #include <stdio.h>
+#include <string.h>
+#include <signal.h>
 
 #include "cgi.h"
 #include "factory/cgi_factory.h"
 #include "http/cgi_http_parser.h"
 #include "dispatcher/cgi_event_dispatcher.h"
+
+static pthread_mutex_t mlock = PTHREAD_MUTEX_INITIALIZER;
+static int usable = 0;
+static int pipefd[2];
+
+static void cgi_event_dispatcher_signal_handler(int sig);
 
 cgi_event_dispatcher_t* cgi_event_dispatcher_create()
 {
@@ -22,6 +33,47 @@ void cgi_event_dispatcher_init(cgi_event_dispatcher_t *dispatcher,int epfd,int l
 	dispatcher->epfd = epfd;
 	dispatcher->listenfd = listenfd;
 	dispatcher->timeout = timeout;
+}
+
+void cgi_event_dispatcher_signal_handler(int sig)
+{
+	int eno = errno;
+	char msg = sig;
+	send(pipefd[1],&msg,1,0);
+	errno = eno;
+}
+
+void cgi_event_dispatcher_addpipe(cgi_event_dispatcher_t *dispatcher)
+{
+	pthread_mutex_lock(&mlock);
+	if(!usable)
+	{
+		usable = 1;
+		pthread_mutex_unlock(&mlock);
+		if(socketpair(AF_UNIX,SOCK_STREAM,0,pipefd) != -1)
+		{
+			cgi_event_dispatcher_set_nonblocking(pipefd[1]);
+			cgi_event_dispatcher_addfd(dispatcher,pipefd[0],1,0);
+		}
+	}
+	else
+	{
+		pthread_mutex_unlock(&mlock);
+	}
+}
+
+void cgi_event_dispatcher_addsig(int sig)
+{
+	/*
+	struct sigaction sa;
+	memset(&sa,0,sizeof(sa));
+	sa.sa_handler = cgi_event_dispatcher_signal_handler;
+	sa.sa_flags |= SA_RESTART;
+	sigfillset(&sa.sa_mask);
+	int retcode = sigaction(sig,&sa,NULL);
+	assert(retcode != -1);
+	*/
+	signal(sig,cgi_event_dispatcher_signal_handler);
 }
 
 void cgi_event_dispatcher_addfd(cgi_event_dispatcher_t *dispatcher,int fd,int in,int oneshot)
@@ -81,9 +133,11 @@ void cgi_event_dispatcher_loop(cgi_event_dispatcher_t *dispatcher)
 	int i;
 	int tmpfd;
 	int cfd;
+	int retcode;
 	struct epoll_event event;
 	struct sockaddr clientaddr;
 	socklen_t clientlen;
+	char signum;
 
 	while(!stop)
 	{
@@ -93,9 +147,13 @@ void cgi_event_dispatcher_loop(cgi_event_dispatcher_t *dispatcher)
 		{
 			event = dispatcher->events[i];
 			tmpfd = event.data.fd;
-			if(dispatcher->listenfd == tmpfd)
+			if(tmpfd == dispatcher->listenfd)
 			{
 				cfd = accept(tmpfd,&clientaddr,&clientlen);
+				if(cfd == -1)
+				{
+					perror("cfd");
+				}
 				cgi_event_dispatcher_addfd(dispatcher,cfd,1,1);
 				cgi_http_connection_init4(dispatcher->connections + cfd,
 					cfd,&clientaddr,clientlen);
@@ -106,6 +164,29 @@ void cgi_event_dispatcher_loop(cgi_event_dispatcher_t *dispatcher)
 			}
 			else if(event.events & EPOLLIN)
 			{
+				if(tmpfd == pipefd[0])
+				{
+					retcode = recv(pipefd[0],&signum,sizeof(signum),0);
+					if(retcode <= 0)
+					{
+						continue;
+					}
+					switch(signum)
+					{
+						case SIGCHLD:
+						case SIGHUP:
+							break;
+
+						case SIGTERM:
+						case SIGINT:
+							stop = 1;
+							break;
+
+						default:
+							break;
+					}
+					continue;
+				}
 				cgi_http_connection_read(dispatcher->connections + tmpfd);
 				cgi_event_dispatcher_modfd(dispatcher,tmpfd,EPOLLOUT);
 			}

@@ -13,6 +13,8 @@ extern "C"
 extern cgi_event_dispatcher_t* cgi_event_dispatcher_create();
 extern void cgi_event_dispatcher_init(cgi_event_dispatcher_t *dispatcher,
 	int epfd,int listenfd,int timeout);
+extern void cgi_event_dispatcher_addsig(int sig);
+extern void cgi_event_dispatcher_addpipe(cgi_event_dispatcher_t *dispatcher);
 extern void cgi_event_dispatcher_addfd(cgi_event_dispatcher_t *dispatcher,int fd,
 	int in,int oneshot);
 extern void cgi_event_dispatcher_rmfd(cgi_event_dispatcher_t *dispatcher,int fd);
