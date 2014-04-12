@@ -56,7 +56,8 @@ void cgi_http_connection_init4(cgi_http_connection_t *connection,int sockfd,
 }
 
 void cgi_http_connection_read(cgi_http_connection_t *connection)
-{ int rd = 0;
+{
+	int rd = 0;
 	while((rd = read(connection->sockfd,connection->rbuffer,connection->rsize - connection->read_idx)) > 0)
 	{
 		connection->read_idx += rd;

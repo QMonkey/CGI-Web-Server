@@ -45,20 +45,23 @@ void cgi_event_dispatcher_signal_handler(int sig)
 
 void cgi_event_dispatcher_addpipe(cgi_event_dispatcher_t *dispatcher)
 {
-	pthread_mutex_lock(&mlock);
 	if(!usable)
 	{
-		usable = 1;
-		pthread_mutex_unlock(&mlock);
-		if(socketpair(AF_UNIX,SOCK_STREAM,0,pipefd) != -1)
+		pthread_mutex_lock(&mlock);
+		if(!usable)
 		{
-			cgi_event_dispatcher_set_nonblocking(pipefd[1]);
-			cgi_event_dispatcher_addfd(dispatcher,pipefd[0],1,0);
+			usable = 1;
+			pthread_mutex_unlock(&mlock);
+			if(socketpair(AF_UNIX,SOCK_STREAM,0,pipefd) != -1)
+			{
+				cgi_event_dispatcher_set_nonblocking(pipefd[1]);
+				cgi_event_dispatcher_addfd(dispatcher,pipefd[0],1,0);
+			}
 		}
-	}
-	else
-	{
-		pthread_mutex_unlock(&mlock);
+		else
+		{
+			pthread_mutex_unlock(&mlock);
+		}
 	}
 }
 
