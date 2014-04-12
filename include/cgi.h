@@ -4,6 +4,8 @@
 #include <sys/epoll.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <pthread.h>
+#include <semaphore.h>
 
 #include <stdint.h>
 
@@ -15,6 +17,7 @@
 #define CGI_URL_DLTRIE_KEY_SIZE 32
 #define CGI_CONNECTION_SIZE 1024
 #define CGI_EVENT_SIZE	1024
+#define CGI_THREAD_POOL_SIZE 8
 
 typedef enum CGI_OBJECT CGI_OBJECT;
 typedef enum LINE_STATUS LINE_STATUS;
@@ -25,6 +28,8 @@ typedef enum HTTP_METHOD HTTP_METHOD;
 typedef struct cgi_http_connection cgi_http_connection_t;
 typedef struct cgi_param_slist cgi_pslist_t;
 typedef struct cgi_url_dltrie cgi_url_dltrie_t;
+typedef struct cgi_task_queue cgi_task_queue_t;
+typedef struct cgi_thread_pool cgi_thread_pool_t;
 typedef struct cgi_event_dispatcher cgi_event_dispatcher_t;
 
 typedef void (*cgi_handler_t)(cgi_http_connection_t*);
@@ -114,6 +119,23 @@ struct cgi_url_dltrie
 	cgi_handler_t handler;
 	uint32_t ksize;
 	CGI_DLTRIE_ENTRY(cgi_url_dltrie_t) linker;
+};
+
+struct cgi_task_queue
+{
+	void* (*callback)(void*);
+	void *arg;
+	CGI_SLIST_ENTRY(cgi_task_queue_t) linker;
+};
+
+struct cgi_thread_pool
+{
+	sem_t semaphore;
+	pthread_mutex_t mutex;
+	pthread_t *tids;
+	cgi_task_queue_t *head;
+	uint32_t size;
+	int flag;
 };
 
 struct cgi_event_dispatcher
