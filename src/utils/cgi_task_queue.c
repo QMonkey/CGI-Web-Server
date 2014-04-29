@@ -10,6 +10,7 @@ cgi_task_queue_t* cgi_task_queue_create(void* (*callback)(void*), void *arg)
 	cgi_task_queue_t *node = cgi_factory_create(TASK_QUEUE);
 	node->callback = callback;
 	node->arg = arg;
+	node->linker.next = NULL;
 	return node;
 }
 
@@ -66,6 +67,6 @@ void cgi_task_queue_destroy(cgi_task_queue_t **head_ptr)
 	if(head != NULL)
 	{
 		cgi_task_queue_destroy(&head->linker.next);
+		cgi_task_queue_delete(head);
 	}
-	cgi_task_queue_delete(head);
 }

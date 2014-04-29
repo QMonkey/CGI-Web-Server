@@ -14,8 +14,9 @@ cgi_thread_pool_t* cgi_thread_pool_create()
 	cgi_thread_pool_t *pool = (cgi_thread_pool_t*)cgi_factory_create(THREAD_POOL);
 	pool->head = NULL;
 	pool->sflag = 1;
+	pool->size = CGI_THREAD_POOL_SIZE;
 	pthread_mutex_init(&pool->mutex, NULL);
-	sem_init(&pool->semaphore, 0, 1);
+	sem_init(&pool->semaphore, 0, 0);
 	return pool;
 }
 
@@ -55,5 +56,9 @@ void cgi_thread_pool_stop(cgi_thread_pool_t *pool)
 
 void cgi_thread_pool_destroy(cgi_thread_pool_t *pool)
 {
+	cgi_thread_pool_stop(pool);
+	sem_destroy(&pool->semaphore);
+	pthread_mutex_destroy(&pool->mutex);
+	cgi_task_queue_destroy(&pool->head);
 	cgi_factory_destroy(pool, THREAD_POOL);
 }
