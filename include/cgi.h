@@ -10,8 +10,7 @@
 #include <stdint.h>
 
 #include "utils/cgi_slist.h"
-#include "utils/cgi_dltrie.h"
-
+#include "utils/cgi_dltrie.h" 
 #define CGI_HTTP_CONNECTION_READ_BUFFER_SIZE 1024
 #define CGI_HTTP_CONNECTION_WRITE_BUFFER_SIZE 1024
 #define CGI_URL_DLTRIE_KEY_SIZE 32
@@ -39,7 +38,9 @@ enum CGI_OBJECT
 	HTTP_CONNECTION,
 	PARAM_SLIST,
 	URL_DLTRIE,
-	EVENT_DISPATCHER
+	EVENT_DISPATCHER,
+	TASK_QUEUE,
+	THREAD_POOL
 };
 
 enum LINE_STATUS
@@ -135,7 +136,7 @@ struct cgi_thread_pool
 	pthread_t *tids;
 	cgi_task_queue_t *head;
 	uint32_t size;
-	int flag;
+	int sflag;
 };
 
 struct cgi_event_dispatcher

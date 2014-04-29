@@ -12,9 +12,9 @@ void* cgi_factory_create(CGI_OBJECT item)
 	cgi_http_connection_t *connection = NULL;
 	cgi_url_dltrie_t *url_trie = NULL;
 	cgi_event_dispatcher_t *dispatcher = NULL;
+	cgi_thread_pool_t *pool = NULL;
 
-	switch(item)
-	{
+	switch(item) {
 	case HTTP_CONNECTION:
 		connection = (cgi_http_connection_t*)malloc(sizeof(cgi_http_connection_t));
 		connection->rbuffer = (char*)malloc(sizeof(char) * 
@@ -27,7 +27,7 @@ void* cgi_factory_create(CGI_OBJECT item)
 		break;
 
 	case PARAM_SLIST:
-		object = (cgi_pslist_t*)malloc(sizeof(cgi_pslist_t));
+		object = malloc(sizeof(cgi_pslist_t));
 		break;
 
 	case URL_DLTRIE:
@@ -44,6 +44,16 @@ void* cgi_factory_create(CGI_OBJECT item)
 		dispatcher->connections = cgi_factory_create_vector(HTTP_CONNECTION,CGI_CONNECTION_SIZE);
 		dispatcher->csize = CGI_CONNECTION_SIZE;
 		object = dispatcher;
+		break;
+
+	case TASK_QUEUE:
+		object = malloc(sizeof(cgi_task_queue_t));
+		break;
+
+	case THREAD_POOL:
+		pool = (cgi_thread_pool_t*)malloc(sizeof(cgi_thread_pool_t));
+		pool->tids = (pthread_t*)malloc(sizeof(pthread_t) * CGI_THREAD_POOL_SIZE);
+		object = pool;
 		break;
 
 	default:
@@ -87,6 +97,8 @@ void cgi_factory_destroy(void *object,CGI_OBJECT item)
 	cgi_http_connection_t *connection = NULL;
 	cgi_url_dltrie_t *url_trie = NULL;
 	cgi_event_dispatcher_t *dispatcher = NULL;
+	cgi_task_queue_t *node = NULL;
+	cgi_thread_pool_t *pool = NULL;
 	switch(item)
 	{
 	case HTTP_CONNECTION:
@@ -104,6 +116,14 @@ void cgi_factory_destroy(void *object,CGI_OBJECT item)
 		dispatcher = (cgi_event_dispatcher_t*)object;
 		free(dispatcher->events);
 		cgi_factory_destroy_vector(dispatcher->connections,HTTP_CONNECTION);
+		break;
+
+	case TASK_QUEUE:
+		break;
+
+	case THREAD_POOL:
+		pool = (cgi_thread_pool_t*)object;
+		free(pool->tids);
 		break;
 
 	defualt:
