@@ -7,15 +7,14 @@
 
 static void* print(void *arg)
 {
-	int value = (int)arg;
-	printf("%d\n", value);
+	printf("%d\n", (long)arg);
 	return NULL;
 }
 
 static void* consumer_one(void *arg)
 {
 	cgi_thread_pool_t *pool = (cgi_thread_pool_t*)arg;
-	int i;
+	long i;
 	for(i = -1; i > -10; --i)
 	{
 		cgi_thread_pool_execute(pool, print, (void*)i);
@@ -26,7 +25,7 @@ static void* consumer_one(void *arg)
 static void* consumer_two(void *arg)
 {
 	cgi_thread_pool_t *pool = (cgi_thread_pool_t*)arg;
-	int i;
+	long i;
 	for(i = 1; i < 10; ++i)
 	{
 		cgi_thread_pool_execute(pool, print, (void*)i);
