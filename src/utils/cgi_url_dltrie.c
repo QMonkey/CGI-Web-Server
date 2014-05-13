@@ -45,6 +45,10 @@ void cgi_url_dltrie_init(cgi_url_dltrie_t **head_ptr)
 	dlhandle = cgi_dlsym_open("web_favicon");
 	cgi_url_dltrie_insert(head_ptr, "/favicon.ico", 
 		cgi_dlsym_get_handler(dlhandle, "do_response"), dlhandle);
+
+	dlhandle = cgi_dlsym_open("web_redirect");
+	cgi_url_dltrie_insert(head_ptr, "/redirect.html", 
+		cgi_dlsym_get_handler(dlhandle, "do_response"), dlhandle);
 }
 
 char* cgi_url_strpbrk(char *url)
