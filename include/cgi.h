@@ -22,6 +22,7 @@
 
 #define CGI_WEB_ROOT "../web/"
 #define CGI_WEB_DLPATH "../web/lib/"
+#define CGI_WEB_PUBLIC_PATH "../web/public/"
 
 typedef enum CGI_OBJECT CGI_OBJECT;
 typedef enum LINE_STATUS LINE_STATUS;

@@ -42,12 +42,14 @@ void cgi_url_dltrie_init(cgi_url_dltrie_t **head_ptr)
 	cgi_url_dltrie_insert(head_ptr, "/error.html", 
 		cgi_dlsym_get_handler(dlhandle, "do_response"), dlhandle);
 
-	dlhandle = cgi_dlsym_open("web_favicon");
+	dlhandle = cgi_dlsym_open("web_default");
 	cgi_url_dltrie_insert(head_ptr, "/favicon.ico", 
 		cgi_dlsym_get_handler(dlhandle, "do_response"), dlhandle);
-
-	dlhandle = cgi_dlsym_open("web_redirect");
-	cgi_url_dltrie_insert(head_ptr, "/redirect.html", 
+	cgi_url_dltrie_insert(head_ptr, "/css/index.css", 
+		cgi_dlsym_get_handler(dlhandle, "do_response"), dlhandle);
+	cgi_url_dltrie_insert(head_ptr, "/css/reset.css", 
+		cgi_dlsym_get_handler(dlhandle, "do_response"), dlhandle);
+	cgi_url_dltrie_insert(head_ptr, "/js/signUp.js", 
 		cgi_dlsym_get_handler(dlhandle, "do_response"), dlhandle);
 }
 
