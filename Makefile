@@ -9,7 +9,7 @@ OBJS = $(OBJPATH)/cgi_factory.o $(OBJPATH)/cgi_http_parser.o $(OBJPATH)/cgi_para
 
 TESTOBJS = $(OBJPATH)/cgi_slist_test.o $(OBJPATH)/cgi_param_slist_test.o $(OBJPATH)/cgi_http_parser_test.o $(OBJPATH)/cgi_url_dltrie_test.o $(OBJPATH)/cgi_event_dispatcher_test.o $(OBJPATH)/cgi_thread_pool_test.o $(OBJPATH)/cgi_task_queue_test.o $(OBJPATH)/cgi_dlsym_test.o
 
-DLLS = $(DLPATH)/libweb_error.so $(DLPATH)/libweb_index.so $(DLPATH)/libweb_default.so
+DLLS = $(DLPATH)/libweb_error.so $(DLPATH)/libweb_index.so $(DLPATH)/libweb_default.so $(DLPATH)/libweb_signin.so $(DLPATH)/libweb_signup.so
 
 
 all: $(OBJS) $(TESTOBJS) $(EXEC) $(DLLS)
@@ -94,14 +94,20 @@ $(OBJPATH)/cgi_task_queue_test.o: test/cgi_task_queue_test.c
 $(OBJPATH)/cgi_dlsym.o: src/utils/cgi_dlsym.c
 	$(CC) -g -c $< -I include -o $@
 
+$(DLPATH)/libweb_default.so: web/src/web_default.c
+	$(CC) -fPIC -shared -nostartfiles $< src/factory/cgi_factory.c src/utils/cgi_dlsym.c src/utils/cgi_url_dltrie.c src/http/cgi_http_parser.c -I include -I web/include -o $@
+
 $(DLPATH)/libweb_error.so: web/src/web_error.c
 	$(CC) -fPIC -shared -nostartfiles $< src/http/cgi_http_parser.c -I include -I web/include -o $@
 
 $(DLPATH)/libweb_index.so: web/src/web_index.c
 	$(CC) -fPIC -shared -nostartfiles $< src/http/cgi_http_parser.c -I include -I web/include -o $@
 
-$(DLPATH)/libweb_default.so: web/src/web_default.c
-	$(CC) -fPIC -shared -nostartfiles $< src/factory/cgi_factory.c src/utils/cgi_dlsym.c src/utils/cgi_url_dltrie.c src/http/cgi_http_parser.c -I include -I web/include -o $@
+$(DLPATH)/libweb_signin.so: web/src/web_signin.c
+	$(CC) -fPIC -shared -nostartfiles $< src/http/cgi_http_parser.c -I include -I web/include -o $@
+
+$(DLPATH)/libweb_signup.so: web/src/web_signup.c
+	$(CC) -fPIC -shared -nostartfiles $< src/http/cgi_http_parser.c -I include -I web/include -o $@
 
 clean:
 	-rm -rf $(EXEC) $(OBJS) $(TESTOBJS) $(DLLS)
