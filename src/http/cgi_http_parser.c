@@ -16,6 +16,8 @@
 #include "dispatcher/cgi_event_dispatcher.h"
 #include "utils/cgi_url_dltrie.h"
 
+#include "utils/cgi_param_slist.h"
+
 static HTTP_STATUS cgi_http_parse_method(cgi_http_connection_t *connection);
 static HTTP_STATUS cgi_http_parse_version(cgi_http_connection_t *connection);
 
@@ -358,6 +360,7 @@ void cgi_http_process(cgi_http_connection_t *connection)
 	}
 	else
 	{
+		cgi_http_parse_param(connection);
 		cgi_http_process_write(connection);
 	}
 	cgi_event_dispatcher_modfd(connection->dispatcher, connection->sockfd, EPOLLOUT);
@@ -477,8 +480,8 @@ void cgi_http_parse_param(cgi_http_connection_t *connection)
 			*src++ = '\0';
 
 			value = src;
-			cgi_pslist_insert_head(&connection->head,
-				cgi_pslist_create(key,value));
+			cgi_pslist_t *head = cgi_pslist_create(key,value);
+			cgi_pslist_insert_head(&connection->head,head);
 			if((src = strpbrk(src,"&")) != NULL)
 			{
 				*src++ = '\0';

@@ -17,6 +17,7 @@ void do_response(cgi_http_connection_t *connection)
 	struct stat st;
 	if(stat(buffer, &st) != -1 && S_ISREG(st.st_mode))
 	{
+		snprintf(buffer, CGI_NAME_BUFFER_SIZE, "public%s", connection->url);
 		cgi_http_write_request_line(connection, OK);
 		cgi_http_write_file(connection, buffer);
 	}

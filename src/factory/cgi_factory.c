@@ -49,8 +49,7 @@ void* cgi_factory_create(CGI_OBJECT item)
 	case TASK_QUEUE:
 		object = malloc(sizeof(cgi_task_queue_t));
 		break;
-
-	case THREAD_POOL:
+case THREAD_POOL:
 		pool = (cgi_thread_pool_t*)malloc(sizeof(cgi_thread_pool_t));
 		pool->tids = (pthread_t*)malloc(sizeof(pthread_t) * CGI_THREAD_POOL_SIZE);
 		object = pool;

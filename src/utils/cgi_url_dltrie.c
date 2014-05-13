@@ -50,6 +50,14 @@ void cgi_url_dltrie_init(cgi_url_dltrie_t **head_ptr)
 	cgi_url_dltrie_insert(head_ptr, "/signUp.html", 
 		cgi_dlsym_get_handler(dlhandle, "do_response"), dlhandle);
 
+	dlhandle = cgi_dlsym_open("web_verify_signin");
+	cgi_url_dltrie_insert(head_ptr, "/verifySignIn", 
+		cgi_dlsym_get_handler(dlhandle, "do_response"), dlhandle);
+
+	dlhandle = cgi_dlsym_open("web_verify_signup");
+	cgi_url_dltrie_insert(head_ptr, "/verifySignUp", 
+		cgi_dlsym_get_handler(dlhandle, "do_response"), dlhandle);
+
 	dlhandle = cgi_dlsym_open("web_default");
 	cgi_url_dltrie_insert(head_ptr, "/favicon.ico", 
 		cgi_dlsym_get_handler(dlhandle, "do_response"), dlhandle);

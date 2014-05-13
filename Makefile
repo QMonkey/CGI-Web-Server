@@ -9,7 +9,7 @@ OBJS = $(OBJPATH)/cgi_factory.o $(OBJPATH)/cgi_http_parser.o $(OBJPATH)/cgi_para
 
 TESTOBJS = $(OBJPATH)/cgi_slist_test.o $(OBJPATH)/cgi_param_slist_test.o $(OBJPATH)/cgi_http_parser_test.o $(OBJPATH)/cgi_url_dltrie_test.o $(OBJPATH)/cgi_event_dispatcher_test.o $(OBJPATH)/cgi_thread_pool_test.o $(OBJPATH)/cgi_task_queue_test.o $(OBJPATH)/cgi_dlsym_test.o
 
-DLLS = $(DLPATH)/libweb_error.so $(DLPATH)/libweb_index.so $(DLPATH)/libweb_default.so $(DLPATH)/libweb_signin.so $(DLPATH)/libweb_signup.so
+DLLS = $(DLPATH)/libweb_error.so $(DLPATH)/libweb_index.so $(DLPATH)/libweb_default.so $(DLPATH)/libweb_signin.so $(DLPATH)/libweb_signup.so $(DLPATH)/libweb_verify_signin.so $(DLPATH)/libweb_verify_signup.so
 
 
 all: $(OBJS) $(TESTOBJS) $(EXEC) $(DLLS)
@@ -108,6 +108,12 @@ $(DLPATH)/libweb_signin.so: web/src/web_signin.c
 
 $(DLPATH)/libweb_signup.so: web/src/web_signup.c
 	$(CC) -fPIC -shared -nostartfiles $< src/http/cgi_http_parser.c -I include -I web/include -o $@
+
+$(DLPATH)/libweb_verify_signin.so: web/src/web_verify_signin.c
+	$(CC) -fPIC -shared -nostartfiles $< src/factory/cgi_factory.c src/http/cgi_http_parser.c src/utils/cgi_param_slist.c -I include -I web/include -o $@
+
+$(DLPATH)/libweb_verify_signup.so: web/src/web_verify_signup.c
+	$(CC) -fPIC -shared -nostartfiles $< src/http/cgi_http_parser.c src/utils/cgi_param_slist.c -I include -I web/include -o $@
 
 clean:
 	-rm -rf $(EXEC) $(OBJS) $(TESTOBJS) $(DLLS)
