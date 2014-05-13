@@ -13,6 +13,7 @@
 #include "cgi.h"
 #include "factory/cgi_factory.h"
 #include "http/cgi_http_parser.h"
+#include "pool/cgi_thread_pool.h"
 #include "dispatcher/cgi_event_dispatcher.h"
 
 static pthread_mutex_t mlock = PTHREAD_MUTEX_INITIALIZER;
@@ -25,6 +26,7 @@ cgi_event_dispatcher_t* cgi_event_dispatcher_create()
 {
 	cgi_event_dispatcher_t *dispatcher = cgi_factory_create(EVENT_DISPATCHER);
 	dispatcher->timeout = -1;
+	dispatcher->pool = cgi_thread_pool_create();
 	return dispatcher;
 }
 
@@ -142,6 +144,8 @@ void cgi_event_dispatcher_loop(cgi_event_dispatcher_t *dispatcher)
 	socklen_t clientlen;
 	char signum;
 
+	cgi_thread_pool_start(dispatcher->pool);
+
 	while(!stop)
 	{
 		nfds = epoll_wait(dispatcher->epfd,dispatcher->events,
@@ -158,8 +162,8 @@ void cgi_event_dispatcher_loop(cgi_event_dispatcher_t *dispatcher)
 					perror("cfd");
 				}
 				cgi_event_dispatcher_addfd(dispatcher,cfd,1,1);
-				cgi_http_connection_init4(dispatcher->connections + cfd,
-					cfd,&clientaddr,clientlen);
+				cgi_http_connection_init5(dispatcher->connections + cfd,
+					dispatcher,cfd,&clientaddr,clientlen);
 			}
 			else if(event.events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR))
 			{
@@ -191,7 +195,8 @@ void cgi_event_dispatcher_loop(cgi_event_dispatcher_t *dispatcher)
 					continue;
 				}
 				cgi_http_connection_read(dispatcher->connections + tmpfd);
-				cgi_event_dispatcher_modfd(dispatcher,tmpfd,EPOLLOUT);
+				cgi_thread_pool_execute(dispatcher->pool, cgi_http_process,
+					 dispatcher->connections + tmpfd);
 			}
 			else if(event.events & EPOLLOUT)
 			{
@@ -199,9 +204,11 @@ void cgi_event_dispatcher_loop(cgi_event_dispatcher_t *dispatcher)
 			}
 			else
 			{
+				printf("Error!");
 			}
 		}
 	}
+	cgi_thread_pool_stop(dispatcher->pool);
 }
 
 void cgi_event_dispatcher_destroy(cgi_event_dispatcher_t *dispatcher)

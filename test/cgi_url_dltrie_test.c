@@ -34,12 +34,18 @@ int main(int argc,char **argv)
 	while(!feof(fp))
 	{
 		fscanf(fp,"%s",buffer);
-		cgi_url_dltrie_insert(&url_trie,buffer,function_handler);
+		cgi_url_dltrie_insert(&url_trie,buffer,function_handler,NULL);
 		cgi_handler_t handler = cgi_url_dltrie_find(url_trie,buffer);
 		handler(NULL);
 	}
 
 	travel(url_trie);
+
+	cgi_url_dltrie_t *default_root = cgi_url_dltrie_default_root();
+	cgi_handler_t handler = cgi_url_dltrie_find(default_root, "/");
+	handler(NULL);
+	handler = cgi_url_dltrie_find(default_root, "/error.html");
+	handler(NULL);
 
 	return 0;
 }

@@ -4,6 +4,7 @@
 
 #include "cgi.h"
 #include "factory/cgi_factory.h"
+#include "utils/cgi_dlsym.h"
 #include "utils/cgi_url_dltrie.h"
 
 static cgi_url_dltrie_t *url_trie = NULL;
@@ -14,7 +15,36 @@ cgi_url_dltrie_t* cgi_url_dltrie_create()
 {
 	cgi_url_dltrie_t *elem = cgi_factory_create(URL_DLTRIE);
 	elem->handler = NULL;
+	elem->dlhandle = NULL;
 	return elem;
+}
+
+cgi_url_dltrie_t* cgi_url_dltrie_default_root()
+{
+	if(url_trie == NULL)
+	{
+		cgi_url_dltrie_init(&url_trie);
+	}
+	return url_trie;
+}
+
+void cgi_url_dltrie_init(cgi_url_dltrie_t **head_ptr)
+{	
+	void *dlhandle = NULL;
+
+	dlhandle = cgi_dlsym_open("web_index");
+	cgi_url_dltrie_insert(head_ptr, "/", 
+		cgi_dlsym_get_handler(dlhandle, "do_response"), dlhandle);
+	cgi_url_dltrie_insert(head_ptr, "/index.html", 
+		cgi_dlsym_get_handler(dlhandle, "do_response"), dlhandle);
+
+	dlhandle = cgi_dlsym_open("web_error");
+	cgi_url_dltrie_insert(head_ptr, "/error.html", 
+		cgi_dlsym_get_handler(dlhandle, "do_response"), dlhandle);
+
+	dlhandle = cgi_dlsym_open("web_favicon");
+	cgi_url_dltrie_insert(head_ptr, "/favicon.ico", 
+		cgi_dlsym_get_handler(dlhandle, "do_response"), dlhandle);
 }
 
 char* cgi_url_strpbrk(char *url)
@@ -32,7 +62,7 @@ char* cgi_url_strpbrk(char *url)
 }
 
 void cgi_url_dltrie_insert(cgi_url_dltrie_t **head_ptr,char *url,
-	cgi_handler_t handler)
+	cgi_handler_t handler,void *dlhandle)
 {
 	if(head_ptr == NULL || url == NULL || *url == '\0')
 	{
@@ -61,6 +91,7 @@ void cgi_url_dltrie_insert(cgi_url_dltrie_t **head_ptr,char *url,
 		if(*scanner == '\0')
 		{
 			head->handler = handler;
+			head->dlhandle = dlhandle;
 			break;
 		}
 		head_ptr = &CGI_DLTRIE_CHILD(head,linker);

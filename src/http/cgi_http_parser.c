@@ -1,6 +1,10 @@
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/socket.h>
+#include <sys/epoll.h>
+#include <sys/sendfile.h>
+#include <fcntl.h>
 
 #include <stdint.h>
 #include <stdio.h>
@@ -10,6 +14,7 @@
 #include "factory/cgi_factory.h"
 #include "http/cgi_http_parser.h"
 #include "dispatcher/cgi_event_dispatcher.h"
+#include "utils/cgi_url_dltrie.h"
 
 static HTTP_STATUS cgi_http_parse_method(cgi_http_connection_t *connection);
 static HTTP_STATUS cgi_http_parse_version(cgi_http_connection_t *connection);
@@ -43,13 +48,17 @@ void cgi_http_connection_init(cgi_http_connection_t *connection)
 	connection->start_line_idx = 0;
 	connection->content_length = 0;
 	connection->linger = 0;
+	connection->fsize = -1;
+	connection->ffd = -1;
 	connection->cstatus = CHECK_REQUEST_LINE;
 }
 
-void cgi_http_connection_init4(cgi_http_connection_t *connection,int sockfd,
+void cgi_http_connection_init5(cgi_http_connection_t *connection,
+	cgi_event_dispatcher_t *dispatcher,int sockfd,
 	struct sockaddr *clientaddr,socklen_t clientlen)
 {
 	cgi_http_connection_init(connection);
+	connection->dispatcher = dispatcher;
 	connection->sockfd = sockfd;
 	connection->clientlen = clientlen;
 	memcpy(&connection->clientaddr,clientaddr,clientlen);
@@ -67,7 +76,18 @@ void cgi_http_connection_read(cgi_http_connection_t *connection)
 void cgi_http_connection_write(cgi_http_connection_t *connection,
 	cgi_event_dispatcher_t *dispatcher)
 {
-	write(connection->sockfd,connection->rbuffer,connection->read_idx);
+	write(connection->sockfd,connection->wbuffer,connection->write_idx);
+	if(connection->ffd != -1 && connection->fsize != -1)
+	{
+		if(sendfile(connection->sockfd, connection->ffd, NULL, connection->fsize) == -1)
+		{
+			perror("sendfile");
+		}
+		close(connection->ffd);
+		cgi_http_connection_init(connection);
+	}
+	close(connection->sockfd);
+/*
 	if(connection->linger)
 	{
 		cgi_http_connection_init(connection);
@@ -77,6 +97,7 @@ void cgi_http_connection_write(cgi_http_connection_t *connection,
 	{
 		close(connection->sockfd);
 	}
+*/
 }
 
 LINE_STATUS cgi_http_parse_line(cgi_http_connection_t *connection)
@@ -254,7 +275,6 @@ HTTP_STATUS cgi_http_parse_header(cgi_http_connection_t *connection)
 	}
 	else
 	{
-		printf("%s\n",current);
 	}
 	return CHECKING;
 }
@@ -318,6 +338,29 @@ HTTP_STATUS cgi_http_process_read(cgi_http_connection_t *connection)
 
 HTTP_STATUS cgi_http_process_write(cgi_http_connection_t *connection)
 {
+	cgi_url_dltrie_t *url_dltrie = cgi_url_dltrie_default_root();
+	cgi_handler_t handler = cgi_url_dltrie_find(url_dltrie, connection->url);
+	if(handler == NULL)
+	{
+		handler = cgi_url_dltrie_find(url_dltrie, "/error.html");
+	}
+	handler(connection);
+}
+
+void cgi_http_process(cgi_http_connection_t *connection)
+{
+	HTTP_STATUS hstatus = cgi_http_process_read(connection);
+	if(hstatus == BAD_REQUEST)
+	{
+		cgi_http_write_request_line(connection, hstatus);
+		cgi_url_dltrie_t *url_dltrie = cgi_url_dltrie_default_root();
+		cgi_url_dltrie_find(url_dltrie, "/error.html")(connection);
+	}
+	else
+	{
+		cgi_http_process_write(connection);
+	}
+	cgi_event_dispatcher_modfd(connection->dispatcher, connection->sockfd, EPOLLOUT);
 }
 
 void cgi_http_write_request_line(cgi_http_connection_t *connection,HTTP_STATUS hstatus)
@@ -362,6 +405,50 @@ void cgi_http_write_request_line(cgi_http_connection_t *connection,HTTP_STATUS h
 	}
 	connection->write_idx += snprintf(connection->wbuffer,connection->wsize,
 		"%s %s\r\n",connection->version,status);
+}
+
+void cgi_http_write_header(cgi_http_connection_t *connection, char *key, char *value)
+{
+	uint32_t write_idx = connection->write_idx;
+	connection->write_idx += snprintf(connection->wbuffer + write_idx, connection->wsize - write_idx, "%s: %s\r\n", key, value);
+}
+
+void cgi_http_write_content(cgi_http_connection_t *connection, char *content)
+{
+	connection->wbuffer[connection->write_idx++] = '\r';
+	connection->wbuffer[connection->write_idx++] = '\n';
+	uint32_t write_idx = connection->write_idx;
+	connection->write_idx += snprintf(connection->wbuffer + write_idx, connection->wsize - write_idx, "%s", content);
+}
+
+void cgi_http_write_file(cgi_http_connection_t *connection, char *fpath)
+{
+	char buffer[CGI_NAME_BUFFER_SIZE];
+	snprintf(buffer, CGI_NAME_BUFFER_SIZE - 1, "%s%s", CGI_WEB_ROOT, fpath);
+	connection->ffd = open(buffer, O_RDONLY);
+	if(connection->ffd == -1)
+	{
+		perror("open");
+	}
+	else
+	{
+		connection->fsize = lseek(connection->ffd, 0, SEEK_END);
+		if(connection->fsize == -1)
+		{	
+			perror("lseek");
+		}
+		else
+		{
+			snprintf(buffer, CGI_NAME_BUFFER_SIZE - 1, "%lu", connection->fsize);
+			cgi_http_write_header(connection, "Content-Length", buffer);
+			connection->wbuffer[connection->write_idx++] = '\r';
+			connection->wbuffer[connection->write_idx++] = '\n';
+			if(lseek(connection->ffd, 0, SEEK_SET) == -1)
+			{
+				perror("lseek");
+			}
+		}
+	}
 }
 
 void cgi_http_parse_param(cgi_http_connection_t *connection)

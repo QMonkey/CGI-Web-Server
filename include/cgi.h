@@ -11,12 +11,17 @@
 
 #include "utils/cgi_slist.h"
 #include "utils/cgi_dltrie.h" 
+
 #define CGI_HTTP_CONNECTION_READ_BUFFER_SIZE 1024
 #define CGI_HTTP_CONNECTION_WRITE_BUFFER_SIZE 1024
 #define CGI_URL_DLTRIE_KEY_SIZE 32
 #define CGI_CONNECTION_SIZE 1024
 #define CGI_EVENT_SIZE	1024
 #define CGI_THREAD_POOL_SIZE 8
+#define CGI_NAME_BUFFER_SIZE 128
+
+#define CGI_WEB_ROOT "../web/"
+#define CGI_WEB_DLPATH "../web/lib/"
 
 typedef enum CGI_OBJECT CGI_OBJECT;
 typedef enum LINE_STATUS LINE_STATUS;
@@ -85,6 +90,7 @@ enum HTTP_METHOD
 
 struct cgi_http_connection
 {
+	cgi_event_dispatcher_t *dispatcher;
 	char *rbuffer;
 	char *wbuffer;
 	char *version;
@@ -102,6 +108,8 @@ struct cgi_http_connection
 	int linger;
 	HTTP_METHOD method;
 	CHECK_STATUS cstatus;
+	uint64_t fsize;
+	int ffd;
 	int sockfd;
 	struct sockaddr clientaddr;
 	socklen_t clientlen;
@@ -118,6 +126,7 @@ struct cgi_url_dltrie
 {
 	char *key;
 	cgi_handler_t handler;
+	void *dlhandle;
 	uint32_t ksize;
 	CGI_DLTRIE_ENTRY(cgi_url_dltrie_t) linker;
 };
@@ -142,6 +151,7 @@ struct cgi_thread_pool
 struct cgi_event_dispatcher
 {
 	cgi_http_connection_t *connections;
+	cgi_thread_pool_t *pool;
 	struct epoll_event *events;
 	uint32_t csize;
 	uint32_t evsize;
