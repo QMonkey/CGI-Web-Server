@@ -1,5 +1,5 @@
-#ifndef WEB_REDIRECT_H
-#define WEB_REDIRECT_H
+#ifndef WEB_H
+#define WEB_H
 
 #include "cgi.h"
 
