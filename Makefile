@@ -5,7 +5,7 @@ CC = gcc
 
 EXEC = $(EXECPATH)/cgi_slist_test $(EXECPATH)/cgi_param_slist_test $(EXECPATH)/cgi_http_parser_test $(EXECPATH)/cgi_url_dltrie_test $(EXECPATH)/cgi_event_dispatcher_test $(EXECPATH)/cgi_thread_pool_test $(EXECPATH)/cgi_task_queue_test $(EXECPATH)/cgi_server_test $(EXECPATH)/cgi_dlsym_test
 
-OBJS = $(OBJPATH)/cgi_factory.o $(OBJPATH)/cgi_http_parser.o $(OBJPATH)/cgi_object_pool.o $(OBJPATH)/cgi_param_slist.o $(OBJPATH)/cgi_url_dltrie.o $(OBJPATH)/cgi_event_dispatcher.o $(OBJPATH)/cgi_task_queue.o $(OBJPATH)/cgi_thread_pool.o $(OBJPATH)/cgi_dlsym.o
+OBJS = $(OBJPATH)/cgi_factory.o $(OBJPATH)/cgi_http_parser.o $(OBJPATH)/cgi_param_slist.o $(OBJPATH)/cgi_url_dltrie.o $(OBJPATH)/cgi_event_dispatcher.o $(OBJPATH)/cgi_task_queue.o $(OBJPATH)/cgi_thread_pool.o $(OBJPATH)/cgi_dlsym.o
 
 TESTOBJS = $(OBJPATH)/cgi_slist_test.o $(OBJPATH)/cgi_param_slist_test.o $(OBJPATH)/cgi_http_parser_test.o $(OBJPATH)/cgi_url_dltrie_test.o $(OBJPATH)/cgi_event_dispatcher_test.o $(OBJPATH)/cgi_thread_pool_test.o $(OBJPATH)/cgi_task_queue_test.o $(OBJPATH)/cgi_dlsym_test.o
 
@@ -47,9 +47,6 @@ $(OBJPATH)/cgi_http_parser.o: src/http/cgi_http_parser.c
 	$(CC) -g -c $< -I include -o $@
 
 $(OBJPATH)/cgi_url_dltrie.o: src/utils/cgi_url_dltrie.c
-	$(CC) -g -c $< -I include -o $@
-
-$(OBJPATH)/cgi_object_pool.o: src/object/cgi_object_pool.c
 	$(CC) -g -c $< -I include -o $@
 
 $(OBJPATH)/cgi_param_slist.o: src/utils/cgi_param_slist.c
