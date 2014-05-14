@@ -12,13 +12,14 @@
 #include "utils/cgi_slist.h"
 #include "utils/cgi_dltrie.h" 
 
-#define CGI_HTTP_CONNECTION_READ_BUFFER_SIZE 1024
-#define CGI_HTTP_CONNECTION_WRITE_BUFFER_SIZE 1024
+#define CGI_HTTP_CONNECTION_READ_BUFFER_SIZE 4096
+#define CGI_HTTP_CONNECTION_WRITE_BUFFER_SIZE 4096
 #define CGI_URL_DLTRIE_KEY_SIZE 32
 #define CGI_CONNECTION_SIZE 1024
 #define CGI_EVENT_SIZE	1024
 #define CGI_THREAD_POOL_SIZE 8
 #define CGI_NAME_BUFFER_SIZE 128
+#define CGI_FILE_BUFFER_SIZE 4096
 
 #define CGI_WEB_ROOT "../web/"
 #define CGI_WEB_DLPATH "../web/lib/"
@@ -36,6 +37,7 @@ typedef struct cgi_url_dltrie cgi_url_dltrie_t;
 typedef struct cgi_task_queue cgi_task_queue_t;
 typedef struct cgi_thread_pool cgi_thread_pool_t;
 typedef struct cgi_event_dispatcher cgi_event_dispatcher_t;
+typedef struct cgi_template_engine cgi_template_engine_t;
 
 typedef void (*cgi_handler_t)(cgi_http_connection_t*);
 
@@ -159,6 +161,16 @@ struct cgi_event_dispatcher
 	int epfd;
 	int listenfd;
 	int timeout;
+};
+
+struct cgi_template_engine
+{
+	char *rbuffer;
+	char *wbuffer;
+	uint32_t rsize;
+	uint32_t wsize;
+	uint32_t rd_idx;
+	uint32_t wr_idx;
 };
 
 #endif

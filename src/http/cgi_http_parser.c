@@ -354,7 +354,6 @@ void cgi_http_process(cgi_http_connection_t *connection)
 	HTTP_STATUS hstatus = cgi_http_process_read(connection);
 	if(hstatus == BAD_REQUEST)
 	{
-		cgi_http_write_request_line(connection, hstatus);
 		cgi_url_dltrie_t *url_dltrie = cgi_url_dltrie_default_root();
 		cgi_url_dltrie_find(url_dltrie, "/error.html")(connection);
 	}
@@ -454,6 +453,68 @@ void cgi_http_write_file(cgi_http_connection_t *connection, char *fpath)
 	}
 }
 
+/*
+void cgi_http_render_template(cgi_http_connection_t *connection, char *fpath)
+{
+	char buffer[CGI_NAME_BUFFER_SIZE];
+	snprintf(buffer, CGI_NAME_BUFFER_SIZE - 1, "%s%s", CGI_WEB_ROOT, fpath);
+	connection->ffd = open(buffer, O_RDONLY);
+	if(connection->ffd == -1)
+	{
+		perror("open");
+	}
+	else
+	{
+		connection->fsize = lseek(connection->ffd, 0, SEEK_END);
+		if(connection->fsize == -1)
+		{	
+			perror("lseek");
+		}
+		else
+		{
+			char *fbuffer = (char*)malloc(sizeof(char) * (connection->fsize + 1));
+			fbuffer[connection->fsize] = '\0';
+			uint32_t rd = 0, sum = 0;
+			while((rd = read(connection->ffd, fbuffer + sum, 
+				connection->fsize - sum)) > 0)
+			{
+				sum += rd;
+			}
+			if(rd == -1)
+			{
+				perror("read");
+			}
+			else
+			{
+				char *dbuffer[CGI_FILE_BUFFER_SIZE];
+				uint32_t dsize = CGI_FILE_BUFFER_SIZE;
+				cgi_http_render(connection, fbuffer, connection->fsize, dbuffer, &dsize);
+			}
+		}
+	}
+}
+
+void cgi_http_render(cgi_http_connection_t *connection, char *src, uint32_t ssize, char *dest, uint32_t *dsize_ptr)
+{
+	uint32_t length = 0;
+	char *scanner = src;
+	char *end = src + ssize;
+	while((scanner = strpbrk(scanner, "$")) != NULL)
+	{
+		if(*(scanner+1) == '{')
+		{
+			char *ptr_end = strpbrk(scanner, "}");
+			if(ptr_end == NULL)
+			{
+				break;
+			}
+		}
+	}
+	memcpy(dest + length, src,end - src); 
+	length += end - src;
+	*dsize_ptr = length;
+}
+*/
 void cgi_http_parse_param(cgi_http_connection_t *connection)
 {
 	char *src = NULL;
